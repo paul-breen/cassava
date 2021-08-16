@@ -5,10 +5,9 @@ description = "Cassava is a package for reading, plotting and quality-checking C
 authors = ["Paul Breen <pbree@bas.ac.uk>"]
 readme = "README.md"
 license = "Apache-2.0"
-repository = "https://github.com/paul-breen/beelzebub"
-homepage = "https://github.com/paul-breen/beelzebub"
-documentation = "https://raw.githubusercontent.com/paul-breen/beelzebub/main/README.md"
-
+repository = "https://github.com/paul-breen/cassava"
+homepage = "https://github.com/paul-breen/cassava"
+documentation = "https://raw.githubusercontent.com/paul-breen/cassava/main/README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
