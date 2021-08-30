@@ -2,8 +2,24 @@ __version__ = '0.1.0'
 
 import csv
 import datetime
+from enum import Enum
 
 import matplotlib.pyplot as plt
+from blessed import Terminal
+
+INDENT = 4
+_term = Terminal()
+
+class CassavaStatus(Enum):
+    """
+    Cassava Status enum
+    """
+
+    undefined = -1
+    ok = 1
+    warn = 2
+    error = 3
+    neutral = 4
 
 class Cassava(object):
     """
@@ -228,20 +244,143 @@ class Cassava(object):
     def check_column_counts(self):
         """
         Check that the number of columns is consistent for all rows
+
+        :yields: A message dict
         """
 
         first_line_ncols = 0
 
-        for i, row in enumerate(self.rows):
-            if(i < self.conf['first_data_row']):
+        for y, row in enumerate(self.rows):
+            if y < self.conf['first_data_row']:
                 continue
-            if(self.conf['verbose']):
-                print('row {}: ncols = {}'.format(i, len(row)))
             else:
-                if(i == self.conf['first_data_row']):
+                if y == self.conf['first_data_row']:
                     first_line_ncols = len(row)
-                    print('first row {}: ncols = {}'.format(i, len(row)))
+                    msg = {'x': None, 'y': y, 'data': {'is_first_row': True, 'ncols': len(row)}, 'status': CassavaStatus.ok}
                 else:
-                    if(len(row) != first_line_ncols):
-                        print('row {}: ncols = {}'.format(i, len(row)))
+                    msg = {'x': None, 'y': y, 'data': {'is_first_row': False, 'ncols': len(row)}, 'status': CassavaStatus.undefined}
+                    if len(row) != first_line_ncols:
+                        msg['status'] = CassavaStatus.error
+                    else:
+                        msg['status'] = CassavaStatus.ok
+
+                yield msg
+
+    def check_for_empty_columns(self):
+        """
+        Check for any columns that are wholly empty
+
+        :yields: A message dict
+        """
+
+        ncols = len(self.rows[self.conf['first_data_row']])
+
+        for x in range(ncols):
+            is_empty = True
+            status = CassavaStatus.error
+
+            for row in self.rows:
+                try:
+                    if row[x] != '':
+                        is_empty = False
+                        status = CassavaStatus.ok
+                        break
+                except IndexError:
+                    # Some rows may (incorrectly) have different column counts
+                    # but that's not our concern here
+                    pass
+
+            msg = {'x': x, 'y': None, 'data': {'is_empty': is_empty}, 'status': status}
+            yield msg
+
+    def check_for_empty_rows(self):
+        """
+        Check for any rows that are wholly empty
+
+        :yields: A message dict
+        """
+
+        for y, row in enumerate(self.rows):
+            is_empty = True
+            status = CassavaStatus.error
+            ncols = len(row)
+
+            for x in range(ncols):
+                if row[x] != '':
+                    is_empty = False
+                    status = CassavaStatus.ok
+                    break
+
+            msg = {'x': None, 'y': y, 'data': {'is_empty': is_empty}, 'status': status}
+            yield msg
+
+    def print_status(self, text, status):
+        """
+        Print the given text, colour-coded according to the given status
+        """
+
+        if status is CassavaStatus.ok:
+            print(_term.green(text))
+        elif status is CassavaStatus.warn:
+            print(_term.yellow(text))
+        elif status is CassavaStatus.error:
+            print(_term.red(text))
+        elif status is CassavaStatus.neutral:
+            print(_term.blue(text))
+        else:
+            print(text)
+
+    def print_column_counts(self):
+        """
+        Print whether the number of columns is consistent for all rows
+        """
+
+        print('Column counts:')
+        indent = ' ' * INDENT
+
+        for msg in self.check_column_counts():
+            row_text = 'first row' if msg['data']['is_first_row'] else 'row'
+            text = '{}{} {}: ncols = {}'.format(indent, row_text, msg['y'], msg['data']['ncols'])
+
+            if(self.conf['verbose']):
+                self.print_status(text, msg['status'])
+            else:
+                if msg['data']['is_first_row']:
+                    self.print_status(text, msg['status'])
+                elif msg['status'] in [CassavaStatus.warn, CassavaStatus.error]:
+                    self.print_status(text, msg['status'])
+
+    def print_empty_columns(self):
+        """
+        Print any columns that are wholly empty
+        """
+
+        print('Empty columns:')
+        indent = ' ' * INDENT
+
+        for msg in self.check_for_empty_columns():
+            text = '{}column {} is {}empty'.format(indent, msg['x'], '' if msg['data']['is_empty'] else 'not ')
+
+            if msg['data']['is_empty']:
+                self.print_status(text, msg['status'])
+            else:
+                if(self.conf['verbose']):
+                    self.print_status(text, msg['status'])
+
+    def print_empty_rows(self):
+        """
+        Print any rows that are wholly empty
+        """
+
+        print('Empty rows:')
+        indent = ' ' * INDENT
+
+        for msg in self.check_for_empty_rows():
+            text = '{}row {} is {}empty'.format(indent, msg['y'], '' if msg['data']['is_empty'] else 'not ')
+
+            if msg['data']['is_empty']:
+                self.print_status(text, msg['status'])
+            else:
+                if(self.conf['verbose']):
+                    self.print_status(text, msg['status'])
 
