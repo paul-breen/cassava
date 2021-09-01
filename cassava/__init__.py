@@ -5,6 +5,7 @@ import datetime
 from enum import Enum
 
 import matplotlib.pyplot as plt
+import numpy as np
 from blessed import Terminal
 
 INDENT = 4
@@ -198,26 +199,29 @@ class Cassava(object):
             if self.conf['x_as_datetime']:
                 x = [datetime.datetime.strptime(i[self.conf['xcol']] or 'NaN', self.conf['datetime_format']) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
             else:
-                x = [float(i[self.conf['xcol']] or 'NaN') for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
+                x = [float(i[self.conf['xcol']]) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
         else:
             x = [i for i, n in enumerate(range(self.conf['first_data_row'], len(self.rows)))]
 
         return x
 
-    def get_y_axis_data(self, col):
+    def get_y_axis_data(self, col, exc_value=np.nan):
         """
         Get the y-axis data from the rows, transforming as required
 
         :param col: The column index
         :type col: int
+        :param exc_value: The value to use in place of values that throw an
+        exception, when running in forgive mode
+        :type exc_value: any
         :returns: The y-axis data
         :rtype: list
         """
 
         if self.conf['forgive']:
-            y = [self._catch(lambda: float(i[col]), handle=lambda e: None) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
+            y = [self._catch(lambda: float(i[col]), handle=lambda e: exc_value) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
         else:
-            y = [float(i[col] or 'NaN') for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
+            y = [float(i[col]) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
 
         return y
 
