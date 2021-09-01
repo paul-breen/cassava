@@ -270,7 +270,7 @@ class Cassava(object):
 
                 yield msg
 
-    def check_for_empty_columns(self):
+    def check_empty_columns(self):
         """
         Check for any columns that are wholly empty
 
@@ -297,7 +297,7 @@ class Cassava(object):
             msg = {'x': x, 'y': None, 'data': {'is_empty': is_empty}, 'status': status}
             yield msg
 
-    def check_for_empty_rows(self):
+    def check_empty_rows(self):
         """
         Check for any rows that are wholly empty
 
@@ -431,7 +431,7 @@ class Cassava(object):
         print('Empty columns:')
         indent = ' ' * INDENT
 
-        for msg in self.check_for_empty_columns():
+        for msg in self.check_empty_columns():
             text = '{}column {} is {}empty'.format(indent, msg['x'], '' if msg['data']['is_empty'] else 'not ')
 
             if msg['data']['is_empty']:
@@ -448,7 +448,7 @@ class Cassava(object):
         print('Empty rows:')
         indent = ' ' * INDENT
 
-        for msg in self.check_for_empty_rows():
+        for msg in self.check_empty_rows():
             text = '{}row {} is {}empty'.format(indent, msg['y'], '' if msg['data']['is_empty'] else 'not ')
 
             if msg['data']['is_empty']:
