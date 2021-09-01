@@ -318,21 +318,21 @@ class Cassava(object):
             msg = {'x': None, 'y': y, 'data': {'is_empty': is_empty}, 'status': status}
             yield msg
 
-    def print_status(self, text, status):
+    def print_status(self, text, status, end='\n'):
         """
         Print the given text, colour-coded according to the given status
         """
 
         if status is CassavaStatus.ok:
-            print(_term.green(text))
+            print(_term.green(text), end=end)
         elif status is CassavaStatus.warn:
-            print(_term.yellow(text))
+            print(_term.yellow(text), end=end)
         elif status is CassavaStatus.error:
-            print(_term.red(text))
+            print(_term.red(text), end=end)
         elif status is CassavaStatus.neutral:
-            print(_term.blue(text))
+            print(_term.blue(text), end=end)
         else:
-            print(text)
+            print(text, end=end)
 
     def print_column_counts(self):
         """
