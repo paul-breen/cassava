@@ -423,6 +423,25 @@ class Cassava(object):
                 elif msg['status'] in [CassavaStatus.warn, CassavaStatus.error]:
                     self.print_status(text, msg['status'])
 
+    def print_row_counts(self):
+        """
+        Print information about the total rows and data rows
+        """
+
+        print('Row counts:')
+        indent = ' ' * INDENT
+
+        status = CassavaStatus.ok
+        total_nrows = len(self.rows)
+
+        try:
+            data_nrows = total_nrows - self.conf['first_data_row']
+        except KeyError:
+            data_nrows = total_nrows
+
+        text = '{}total rows = {}, data rows = {}'.format(indent, total_nrows, data_nrows)
+        self.print_status(text, status)
+
     def print_empty_columns(self):
         """
         Print any columns that are wholly empty
