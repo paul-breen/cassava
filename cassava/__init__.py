@@ -165,6 +165,17 @@ class Cassava(object):
 
         return labels
 
+    def _raise(self, e):
+        """
+        Enable an exception to be raised in a lambda expression
+
+        :param e: The exception to raise
+        :type e: Exception
+        :raises: e
+        """
+
+        raise e
+
     def _catch(self, func, handle=lambda e: e, *args, **kwargs):
         """
         Enable a function to be exception handled, inline in comprehensions
@@ -186,10 +197,33 @@ class Cassava(object):
         except Exception as e:
             return handle(e)
 
-    def get_x_axis_data(self):
+    def get_column_data(self, col, exc_value=np.nan):
+        """
+        Get the data for the given column, taking into account forgive mode
+
+        :param col: The column index
+        :type col: int
+        :param exc_value: The value to use in place of values that throw an
+        exception, when running in forgive mode
+        :type exc_value: any
+        :returns: The column data
+        :rtype: list
+        """
+
+        if self.conf['forgive']:
+            data = [self._catch(lambda: float(row[col]), handle=lambda e: exc_value) for row in self.rows[self.conf['first_data_row']:len(self.rows)]]
+        else:
+            data = [float(row[col]) for row in self.rows[self.conf['first_data_row']:len(self.rows)]]
+
+        return data
+
+    def get_x_axis_data(self, exc_value=np.nan):
         """
         Get the x-axis data from the rows, transforming as required
 
+        :param exc_value: The value to use in place of values that throw an
+        exception, when running in forgive mode
+        :type exc_value: any
         :returns: The x-axis data
         :rtype: list
         """
@@ -197,9 +231,9 @@ class Cassava(object):
         # The x-column can be datetime, numeric, or default to list of indices
         if self.conf['xcol'] is not None:
             if self.conf['x_as_datetime']:
-                x = [datetime.datetime.strptime(i[self.conf['xcol']] or 'NaN', self.conf['datetime_format']) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
+                x = [self._catch(lambda: datetime.datetime.strptime(row[self.conf['xcol']], self.conf['datetime_format']), handle=lambda e: self._raise(ValueError(f'Failed to convert x-column at row {i} to datetime: {row}'))) for i, row in enumerate(self.rows[self.conf['first_data_row']:len(self.rows)], start=self.conf['first_data_row'])]
             else:
-                x = [float(i[self.conf['xcol']]) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
+                x = self.get_column_data(self.conf['xcol'], exc_value=exc_value)
         else:
             x = [i for i, n in enumerate(range(self.conf['first_data_row'], len(self.rows)))]
 
@@ -218,12 +252,7 @@ class Cassava(object):
         :rtype: list
         """
 
-        if self.conf['forgive']:
-            y = [self._catch(lambda: float(i[col]), handle=lambda e: exc_value) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
-        else:
-            y = [float(i[col]) for i in self.rows[self.conf['first_data_row']:len(self.rows)]]
-
-        return y
+        return self.get_column_data(col, exc_value=exc_value)
 
     def plot(self):
         """
