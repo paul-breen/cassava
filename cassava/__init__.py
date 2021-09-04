@@ -347,6 +347,19 @@ class Cassava(object):
             msg = {'x': None, 'y': y, 'data': {'is_empty': is_empty}, 'status': status}
             yield msg
 
+    def compute_stats(self, data):
+        """
+        Compute statistics for the given data
+
+        :returns: A stats dict
+        :rtype: dict
+        """
+
+        q = np.nanquantile(data, [0.25, 0.5, 0.75])
+        stats = {'min': np.nanmin(data), 'max': np.nanmax(data), 'mean': np.nanmean(data), 'q1': q[0], 'median': q[1], 'q3': q[2], 'std': np.nanstd(data)}
+
+        return stats
+
     def compute_column_stats(self):
         """
         Compute column statistics for the configured columns
@@ -356,10 +369,35 @@ class Cassava(object):
 
         for ycol in self.conf['ycol']:
             Y = self.get_y_axis_data(ycol)
-            q = np.nanquantile(Y, [0.25, 0.5, 0.75])
-            stats = {'min': np.nanmin(Y), 'max': np.nanmax(Y), 'mean': np.nanmean(Y), 'q1': q[0], 'median': q[1], 'q3': q[2], 'std': np.nanstd(Y), 'var': np.nanvar(Y)}
+            stats = self.compute_stats(Y)
             msg = {'x': ycol, 'y': None, 'data': stats, 'status': CassavaStatus.ok}
             yield msg
+
+    def check_column_outliers_iqr(self, k=1.5):
+        """
+        Check for any outliers for the configured columns (IQR)
+
+        :param k: The factor to multiply the IQR by
+        :type k: float
+        :yields: A message dict
+        """
+
+        y0 = self.conf['first_data_row']
+
+        for ycol in self.conf['ycol']:
+            Y = self.get_y_axis_data(ycol)
+            stats = self.compute_stats(Y)
+            iqr = stats['q3'] - stats['q1']
+
+            # High outliers
+            for y in np.where(Y > stats['q3'] + k * iqr)[0]:
+                msg = {'x': ycol, 'y': y + y0, 'data': {'value': Y[y]}, 'status': CassavaStatus.error}
+                yield msg
+
+            # Low outliers
+            for y in np.where(Y < stats['q1'] - k * iqr)[0]:
+                msg = {'x': ycol, 'y': y + y0, 'data': {'value': Y[y]}, 'status': CassavaStatus.error}
+                yield msg
 
     def print_status(self, text, status, end='\n'):
         """
@@ -399,16 +437,17 @@ class Cassava(object):
         prefix = ' ' * indent
 
         # Dynamically calculate column lengths and data coords label lengths
-        coords = []
-        if table[0]['x'] is not None:
-            coords.append('column')
-        if table[0]['y'] is not None:
-            coords.append('row')
-        label_header = ','.join(coords)
+        if len(table) > 0:
+            coords = []
+            if table[0]['x'] is not None:
+                coords.append('column')
+            if table[0]['y'] is not None:
+                coords.append('row')
+            label_header = ','.join(coords)
 
-        col_lens = [0] * len(table[0]['data'])
-        label_len = len(label_header) + 1
-        labels = []
+            col_lens = [0] * len(table[0]['data'])
+            label_len = len(label_header) + 1
+            labels = []
 
         for row in table:
             for x, (k, v) in enumerate(row['data'].items()):
@@ -427,7 +466,6 @@ class Cassava(object):
             if i == 0:
                 text = ''.join([f'{k}'.ljust(col_lens[x]) for x,k in enumerate(row['data'])])
                 self.print_status(prefix + label_header.ljust(label_len) + text, row['status'])
-
 
             text = ''.join([f'{v:{fmt}}'.ljust(col_lens[x]) for x,v in enumerate(row['data'].values())])
             self.print_status(prefix + labels[i].ljust(label_len) + text, row['status'])
@@ -512,5 +550,14 @@ class Cassava(object):
 
         print('Column stats:')
         table = [msg for msg in self.compute_column_stats()]
+        self.print_msg_table(table, indent=INDENT)
+
+    def print_column_outliers_iqr(self):
+        """
+        Print any outliers for the configured columns
+        """
+
+        print('Column outliers (IQR):')
+        table = [msg for msg in self.check_column_outliers_iqr()]
         self.print_msg_table(table, indent=INDENT)
 
