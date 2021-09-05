@@ -254,11 +254,17 @@ class Cassava(object):
 
         return self.get_column_data(col, exc_value=exc_value)
 
-    def plot(self):
+    def plot(self, show=True):
         """
         Plot the data
+
+        :param show: Show the plot
+        :type show: bool
+        :returns: The figure and axis objects
+        :rtype: tuple
         """
 
+        fig, ax = plt.subplots()
         x = self.get_x_axis_data()
         labels = self.get_column_labels_from_header(self.conf['ycol'])
 
@@ -269,10 +275,14 @@ class Cassava(object):
             if len(labels) > i and labels[i]:
                 opt_kwargs['label'] = labels[i]
 
-            plt.plot(x, y, **opt_kwargs)
+            ax.plot(x, y, **opt_kwargs)
 
-        plt.legend()
-        plt.show()
+        ax.legend()
+
+        if show:
+            plt.show()
+
+        return fig, ax
 
     def check_column_counts(self):
         """
