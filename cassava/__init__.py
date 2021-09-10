@@ -360,7 +360,7 @@ class Cassava(object):
 
         return layout
 
-    def _multi_plot(self, fig, axs, x, labels, layout, opts={}):
+    def _plot_multi(self, fig, axs, x, labels, layout, opts={}):
         """
         Plot the data.  Configured columns are each plotted on their own plot
 
@@ -397,7 +397,7 @@ class Cassava(object):
                 axs[i,j].plot(x, y, **opts)
                 axs[i,j].legend()
 
-    def _single_plot(self, fig, axs, x, labels, opts={}):
+    def _plot_single(self, fig, axs, x, labels, opts={}):
         """
         Plot the data.  Configured columns are all plotted on a single plot
 
@@ -449,9 +449,9 @@ class Cassava(object):
         labels = self.get_column_labels_from_header(self.conf['ycol'])
 
         if multi:
-            self._multi_plot(fig, axs, x, labels, layout, opts)
+            self._plot_multi(fig, axs, x, labels, layout, opts)
         else:
-            self._single_plot(fig, axs, x, labels, opts)
+            self._plot_single(fig, axs, x, labels, opts)
 
         if show:
             plt.show()
