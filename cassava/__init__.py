@@ -458,6 +458,78 @@ class Cassava(object):
 
         return fig, axs
 
+    def plot_stats(self, show=True, bins='auto', k=1.5, showfliers=True):
+        """
+        Plot stats of the data
+
+        :param show: Show the plot
+        :type show: bool
+        :param bins: The bins for the density plot
+        :type bins: The types supported by matplotlib.pyplot.hist
+        :param k: The factor to multiply the IQR by
+        :type k: float
+        :param showfliers: Show outliers in the plots
+        :type showfliers: bool
+        :returns: The figure and axes objects
+        :rtype: tuple
+        """
+
+        fig, axs = plt.subplots(len(self.conf['ycol']), 3, squeeze=False)
+        x = self.get_x_axis_data()
+        labels = self.get_column_labels_from_header(self.conf['ycol'])
+
+        for i, ycol in enumerate(self.conf['ycol']):
+            y = self.get_y_axis_data(ycol)
+
+            # Remove any NaNs, as boxplot() balks on them
+            Y = np.array(y)
+            Y = Y[~np.isnan(Y)]
+
+            label = ''
+
+            if len(labels) > i and labels[i]:
+                label = labels[i]
+
+            # Compute the range of the data
+            stats = self.compute_stats(y)
+            r = (stats['min'], stats['max'])
+            iqr = stats['q3'] - stats['q1']
+
+            # Compute the IQR-filtered range of the data
+            if not showfliers:
+                r = (stats['q1'] - k * iqr, stats['q3'] + k * iqr)
+
+            # Density plot
+            axs[i,0].hist(y, bins=bins, range=r, density=True, label=label)
+            axs[i,0].legend()
+
+            if i == 0:
+                axs[i,0].set_title('Density')
+
+            # Line plot and k * IQR interval to show outliers
+            axs[i,1].plot(x, y, label=label)
+            axs[i,1].axhline(y=stats['q3'] + k * iqr, c='red', ls='--', lw=0.5)
+            axs[i,1].axhline(y=stats['q1'] - k * iqr, c='red', ls='--', lw=0.5)
+            axs[i,1].legend()
+
+            # Optionally chop-off outliers
+            if not showfliers:
+                axs[i,1].set_ylim(*r)
+
+            if i == 0:
+                axs[i,1].set_title(f'{k} * IQR')
+
+            # Box plot
+            axs[i,2].boxplot(Y, labels=[label], showfliers=showfliers)
+
+            if i == 0:
+                axs[i,2].set_title('Boxplot')
+
+        if show:
+            plt.show()
+
+        return fig, axs
+
     def check_column_counts(self):
         """
         Check that the number of columns is consistent for all rows
