@@ -254,6 +254,90 @@ class Cassava(object):
 
         return self.get_column_data(col, exc_value=exc_value)
 
+    def compute_stats(self, data):
+        """
+        Compute statistics for the given data
+
+        :returns: A stats dict
+        :rtype: dict
+        """
+
+        q = np.nanquantile(data, [0.25, 0.5, 0.75])
+        stats = {'min': np.nanmin(data), 'max': np.nanmax(data), 'mean': np.nanmean(data), 'q1': q[0], 'median': q[1], 'q3': q[2], 'std': np.nanstd(data)}
+
+        return stats
+
+    def print_status(self, text, status, end='\n'):
+        """
+        Print the given text, colour-coded according to the given status
+
+        :param text: The text to print
+        :type text: str
+        :param status: The status of the message for colour-coding
+        :type status: CassavaStatus
+        :param end: An arbitrary end to append to the text (as with print())
+        :type end: str
+        """
+
+        if status is CassavaStatus.ok:
+            print(_term.green(text), end=end)
+        elif status is CassavaStatus.warn:
+            print(_term.yellow(text), end=end)
+        elif status is CassavaStatus.error:
+            print(_term.red(text), end=end)
+        elif status is CassavaStatus.neutral:
+            print(_term.blue(text), end=end)
+        else:
+            print(text, end=end)
+
+    def print_msg_table(self, table, indent=0, fmt='.2f'):
+        """
+        Print the given list of message dicts as a table
+
+        :param table: The list of message dicts to be tabulated
+        :type table: list
+        :param indent: An indent to prepend to each row of the table
+        :type indent: int
+        :param fmt: A format specifier to apply to each data value
+        :type fmt: str
+        """
+
+        prefix = ' ' * indent
+
+        # Dynamically calculate column lengths and data coords label lengths
+        if len(table) > 0:
+            coords = []
+            if table[0]['x'] is not None:
+                coords.append('column')
+            if table[0]['y'] is not None:
+                coords.append('row')
+            label_header = ','.join(coords)
+
+            col_lens = [0] * len(table[0]['data'])
+            label_len = len(label_header) + 1
+            labels = []
+
+        for row in table:
+            for x, (k, v) in enumerate(row['data'].items()):
+                col_lens[x] = np.max([col_lens[x], len(str(k)) + 1, len(f'{v:{fmt}}') + 1])
+
+            coords = []
+            if row['x'] is not None:
+                coords.append(str(row['x']))
+            if row['y'] is not None:
+                coords.append(str(row['y']))
+            label = ','.join(coords)
+            labels.append(label)
+            label_len = np.max([label_len, len(label) + 1])
+
+        for i, row in enumerate(table):
+            if i == 0:
+                text = ''.join([f'{k}'.ljust(col_lens[x]) for x,k in enumerate(row['data'])])
+                self.print_status(prefix + label_header.ljust(label_len) + text, row['status'])
+
+            text = ''.join([f'{v:{fmt}}'.ljust(col_lens[x]) for x,v in enumerate(row['data'].values())])
+            self.print_status(prefix + labels[i].ljust(label_len) + text, row['status'])
+
     def plot(self, show=True):
         """
         Plot the data
@@ -357,19 +441,6 @@ class Cassava(object):
             msg = {'x': None, 'y': y, 'data': {'is_empty': is_empty}, 'status': status}
             yield msg
 
-    def compute_stats(self, data):
-        """
-        Compute statistics for the given data
-
-        :returns: A stats dict
-        :rtype: dict
-        """
-
-        q = np.nanquantile(data, [0.25, 0.5, 0.75])
-        stats = {'min': np.nanmin(data), 'max': np.nanmax(data), 'mean': np.nanmean(data), 'q1': q[0], 'median': q[1], 'q3': q[2], 'std': np.nanstd(data)}
-
-        return stats
-
     def compute_column_stats(self):
         """
         Compute column statistics for the configured columns
@@ -408,77 +479,6 @@ class Cassava(object):
             for y in np.where(Y < stats['q1'] - k * iqr)[0]:
                 msg = {'x': ycol, 'y': y + y0, 'data': {'value': Y[y]}, 'status': CassavaStatus.error}
                 yield msg
-
-    def print_status(self, text, status, end='\n'):
-        """
-        Print the given text, colour-coded according to the given status
-
-        :param text: The text to print
-        :type text: str
-        :param status: The status of the message for colour-coding
-        :type status: CassavaStatus
-        :param end: An arbitrary end to append to the text (as with print())
-        :type end: str
-        """
-
-        if status is CassavaStatus.ok:
-            print(_term.green(text), end=end)
-        elif status is CassavaStatus.warn:
-            print(_term.yellow(text), end=end)
-        elif status is CassavaStatus.error:
-            print(_term.red(text), end=end)
-        elif status is CassavaStatus.neutral:
-            print(_term.blue(text), end=end)
-        else:
-            print(text, end=end)
-
-    def print_msg_table(self, table, indent=0, fmt='.2f'):
-        """
-        Print the given list of message dicts as a table
-
-        :param table: The list of message dicts to be tabulated
-        :type table: list
-        :param indent: An indent to prepend to each row of the table
-        :type indent: int
-        :param fmt: A format specifier to apply to each data value
-        :type fmt: str
-        """
-
-        prefix = ' ' * indent
-
-        # Dynamically calculate column lengths and data coords label lengths
-        if len(table) > 0:
-            coords = []
-            if table[0]['x'] is not None:
-                coords.append('column')
-            if table[0]['y'] is not None:
-                coords.append('row')
-            label_header = ','.join(coords)
-
-            col_lens = [0] * len(table[0]['data'])
-            label_len = len(label_header) + 1
-            labels = []
-
-        for row in table:
-            for x, (k, v) in enumerate(row['data'].items()):
-                col_lens[x] = np.max([col_lens[x], len(str(k)) + 1, len(f'{v:{fmt}}') + 1])
-
-            coords = []
-            if row['x'] is not None:
-                coords.append(str(row['x']))
-            if row['y'] is not None:
-                coords.append(str(row['y']))
-            label = ','.join(coords)
-            labels.append(label)
-            label_len = np.max([label_len, len(label) + 1])
-
-        for i, row in enumerate(table):
-            if i == 0:
-                text = ''.join([f'{k}'.ljust(col_lens[x]) for x,k in enumerate(row['data'])])
-                self.print_status(prefix + label_header.ljust(label_len) + text, row['status'])
-
-            text = ''.join([f'{v:{fmt}}'.ljust(col_lens[x]) for x,v in enumerate(row['data'].values())])
-            self.print_status(prefix + labels[i].ljust(label_len) + text, row['status'])
 
     def print_column_counts(self):
         """
