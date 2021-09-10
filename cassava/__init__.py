@@ -263,7 +263,7 @@ class Cassava(object):
         """
 
         q = np.nanquantile(data, [0.25, 0.5, 0.75])
-        stats = {'min': np.nanmin(data), 'max': np.nanmax(data), 'mean': np.nanmean(data), 'q1': q[0], 'median': q[1], 'q3': q[2], 'std': np.nanstd(data)}
+        stats = {'min': np.nanmin(data), 'mean': np.nanmean(data), 'max': np.nanmax(data), 'q1': q[0], 'median': q[1], 'q3': q[2], 'std': np.nanstd(data)}
 
         return stats
 
