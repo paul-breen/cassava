@@ -338,35 +338,125 @@ class Cassava(object):
             text = ''.join([f'{v:{fmt}}'.ljust(col_lens[x]) for x,v in enumerate(row['data'].values())])
             self.print_status(prefix + labels[i].ljust(label_len) + text, row['status'])
 
-    def plot(self, show=True):
+    def compute_multi_plot_layout(self, ncols=2):
         """
-        Plot the data
+        Compute an optimal rows and columns layout for multiple plots
 
-        :param show: Show the plot
-        :type show: bool
-        :returns: The figure and axis objects
+        :param ncols: The suggested number of columns in the layout
+        :type ncols: int
+        :returns: The plot layout of rows and columns
         :rtype: tuple
         """
 
-        fig, ax = plt.subplots()
-        x = self.get_x_axis_data()
-        labels = self.get_column_labels_from_header(self.conf['ycol'])
+        N = len(self.conf['ycol'])
+
+        if N < ncols:
+            ncols = N
+
+        if N % ncols == 0:
+            layout = (N // ncols, ncols)
+        else:
+            layout = (N // ncols + 1, ncols)
+
+        return layout
+
+    def _multi_plot(self, fig, axs, x, labels, layout, opts={}):
+        """
+        Plot the data.  Configured columns are each plotted on their own plot
+
+        :param fig: The figure object
+        :type fig: matplotlib.figure.Figure
+        :param axs: The axes array
+        :type axs: matplotlib.axes.Axes
+        :param x: The x-axis data
+        :type x: list
+        :param labels: The column header labels
+        :type labels: list
+        :param layout: The dimensions of the plot grid
+        :type layout: tuple
+        :param opts: Option kwargs to apply to all plots
+        :type opts: dict
+        """
+
+        for i in range(layout[0]):
+            for j in range(layout[1]):
+                k = i * layout[1] + j
+
+                # The last grid row may have empty plots so remove them
+                try:
+                    ycol = self.conf['ycol'][k]
+                except IndexError:
+                    fig.delaxes(axs[i,j])
+                    continue
+
+                y = self.get_y_axis_data(ycol)
+
+                if len(labels) > k and labels[k]:
+                    opts['label'] = labels[k]
+
+                axs[i,j].plot(x, y, **opts)
+                axs[i,j].legend()
+
+    def _single_plot(self, fig, axs, x, labels, opts={}):
+        """
+        Plot the data.  Configured columns are all plotted on a single plot
+
+        :param fig: The figure object
+        :type fig: matplotlib.figure.Figure
+        :param axs: The axes array
+        :type axs: matplotlib.axes.Axes
+        :param x: The x-axis data
+        :type x: list
+        :param labels: The column header labels
+        :type labels: list
+        :param opts: Option kwargs to apply to all plots
+        :type opts: dict
+        """
 
         for i, ycol in enumerate(self.conf['ycol']):
             y = self.get_y_axis_data(ycol)
-            opt_kwargs = {}
 
             if len(labels) > i and labels[i]:
-                opt_kwargs['label'] = labels[i]
+                opts['label'] = labels[i]
 
-            ax.plot(x, y, **opt_kwargs)
+            axs[0,0].plot(x, y, **opts)
 
-        ax.legend()
+        axs[0,0].legend()
+
+    def plot(self, show=True, layout=(1,1), opts={}):
+        """
+        Plot the data
+
+        * If the product of layout > 1, then configured columns are each
+          plotted on their own plot
+        * Otherwise configured columns are all plotted on a single plot
+
+        :param show: Show the plot
+        :type show: bool
+        :param layout: The rows and columns for the subplots() call
+        :type layout: tuple
+        :param opts: Option kwargs to apply to all plots
+        :type opts: dict
+        :returns: The figure and axes objects
+        :rtype: tuple
+        """
+
+        # Determine if we've been asked to plot a multi-plot grid
+        multi = layout[0] * layout[1] > 1
+
+        fig, axs = plt.subplots(*layout, squeeze=False)
+        x = self.get_x_axis_data()
+        labels = self.get_column_labels_from_header(self.conf['ycol'])
+
+        if multi:
+            self._multi_plot(fig, axs, x, labels, layout, opts)
+        else:
+            self._single_plot(fig, axs, x, labels, opts)
 
         if show:
             plt.show()
 
-        return fig, ax
+        return fig, axs
 
     def check_column_counts(self):
         """
