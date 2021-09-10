@@ -652,12 +652,15 @@ class Cassava(object):
         table = [msg for msg in self.compute_column_stats()]
         self.print_msg_table(table, indent=INDENT)
 
-    def print_column_outliers_iqr(self):
+    def print_column_outliers_iqr(self, k=1.5):
         """
         Print any outliers for the configured columns
+
+        :param k: The factor to multiply the IQR by
+        :type k: float
         """
 
-        print('Column outliers (IQR):')
-        table = [msg for msg in self.check_column_outliers_iqr()]
+        print(f'Column outliers ({k} * IQR):')
+        table = [msg for msg in self.check_column_outliers_iqr(k=k)]
         self.print_msg_table(table, indent=INDENT)
 
