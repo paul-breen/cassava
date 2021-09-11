@@ -290,7 +290,7 @@ class Cassava(object):
         else:
             print(text, end=end)
 
-    def print_msg_table(self, table, indent=0, fmt='.2f'):
+    def print_msg_table(self, table, indent=0, fmt='.2g'):
         """
         Print the given list of message dicts as a table
 
