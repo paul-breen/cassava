@@ -3,6 +3,10 @@ import argparse
 from cassava import Cassava
 
 DEF_OPT_DELIMITER = ','
+COMMANDS = {
+    'plot': {'subcommands': ['qc','stats']},
+    'print': {'subcommands': ['qc','stats']}
+}
 
 def parse_cmdln():
     """
@@ -22,10 +26,27 @@ datetime,v1,v2,v3
 
 Then the following invocation will allow all three variables to be plotted on a single plot as a timeseries:
 
-python3 plot_csv.py -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 input.csv
+python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 plot input.csv
 """
 
     parser = argparse.ArgumentParser(description='plot and quality-check CSV (or similarly-delimited) data files', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    # Add commands.  These will appear before positional arguments on the
+    # command line
+    subparsers = parser.add_subparsers(help="commands")
+    parser.set_defaults(command=None)
+
+    for command in COMMANDS:
+        sub = subparsers.add_parser(command)
+        sub.set_defaults(command=command)
+        subsubparsers = sub.add_subparsers(help="subcommands")
+
+        sub.set_defaults(subcommand=COMMANDS[command]['subcommands'][0])
+
+        for subcommand in COMMANDS[command]['subcommands']:
+            subsub = subsubparsers.add_parser(subcommand)
+            subsub.set_defaults(subcommand=subcommand)
+
     parser.add_argument('in_file', help='input file')
     parser.add_argument('-H', '--header-row', help='row containing the header', dest='header_row', type=int, default=Cassava.DEFAULTS['header_row'])
     parser.add_argument('-i', '--first-data-row', help='first row containing data to plot', dest='first_data_row', default=Cassava.DEFAULTS['first_data_row'], type=int)
@@ -36,6 +57,11 @@ python3 plot_csv.py -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 input.csv
     parser.add_argument('-l', '--delimiter', help='alternative delimiter', dest='delimiter', default=Cassava.DEFAULTS['delimiter'], type=str)
     parser.add_argument('-s', '--skip-initial-space', help='ignore whitespace immediately following the delimiter', dest='skip_initial_space', action='store_true', default=Cassava.DEFAULTS['skip_initial_space'])
     parser.add_argument('-F', '--forgive', help='be forgiving when parsing numeric data', dest='forgive', action='store_true', default=Cassava.DEFAULTS['forgive'])
+
+    parser.add_argument('-N', '--plot-in-n-columns', help='number of columns for a multi-plot grid', dest='ncols', default=None, type=int)
+    parser.add_argument('-k', '--tukey-fence-factor', help="factor to multiply IQR by in Tukey's rule", dest='k', default=1.5, type=float)
+    parser.add_argument('-O', '--hide-outliers', help="don't show outliers on stats plots", dest='showfliers', action='store_false', default=True)
+
     parser.add_argument('-v', '--verbose', help='emit verbose messages', dest='verbose', action='store_true', default=Cassava.DEFAULTS['verbose'])
 
     args = parser.parse_args()
@@ -62,14 +88,39 @@ def main():
     args = parse_cmdln()
     conf = Cassava.DEFAULTS.copy()
 
-    # Grab the input file.  All remaining options go in the configuration
+    # All options go in the configuration
     in_file = args.in_file
+    command = args.command
+    subcommand = args.subcommand
     del args.in_file
+    del args.command
+    del args.subcommand
     conf.update(vars(args))
 
     with Cassava(path=in_file, conf=conf) as f:
         f.read()
-        f.plot()
+
+        if command == 'plot':
+            if subcommand == 'qc':
+                if args.ncols:
+                    layout = f.compute_multi_plot_layout(args.ncols)
+                else:
+                    layout = (1,1)
+
+                f.plot(layout=layout)
+            elif subcommand == 'stats':
+                f.plot_stats(k=args.k, showfliers=args.showfliers)
+            else:
+                raise ValueError('Unsupported subcommand')
+        elif command == 'print':
+            if subcommand == 'qc':
+                f.print_qc()
+            elif subcommand == 'stats':
+                f.print_stats(k=args.k)
+            else:
+                raise ValueError('Unsupported subcommand')
+        else:
+            raise ValueError('Unsupported command')
 
 if __name__ == '__main__':
     main()
