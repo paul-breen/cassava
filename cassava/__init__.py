@@ -734,3 +734,24 @@ class Cassava(object):
         table = [msg for msg in self.check_column_outliers_iqr(k=k)]
         self.print_msg_table(table, indent=INDENT)
 
+    def print_qc(self):
+        """
+        Print QC checks
+        """
+
+        self.print_column_counts()
+        self.print_row_counts()
+        self.print_empty_columns()
+        self.print_empty_rows()
+
+    def print_stats(self, k=1.5):
+        """
+        Print stats
+
+        :param k: The factor to multiply the IQR by
+        :type k: float
+        """
+
+        self.print_column_stats()
+        self.print_column_outliers_iqr(k=k)
+
