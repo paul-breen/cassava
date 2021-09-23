@@ -267,7 +267,7 @@ class Cassava(object):
 
         return stats
 
-    def print_status(self, text, status, end='\n'):
+    def print_status(self, text, status, indent=0, end='\n'):
         """
         Print the given text, colour-coded according to the given status
 
@@ -275,20 +275,24 @@ class Cassava(object):
         :type text: str
         :param status: The status of the message for colour-coding
         :type status: CassavaStatus
+        :param indent: Number of blank spaces to indent the text by
+        :type indent: int
         :param end: An arbitrary end to append to the text (as with print())
         :type end: str
         """
 
+        prefix = ' ' * indent
+
         if status is CassavaStatus.ok:
-            print(_term.green(text), end=end)
+            print(prefix + _term.green(text), end=end)
         elif status is CassavaStatus.warn:
-            print(_term.yellow(text), end=end)
+            print(prefix + _term.yellow(text), end=end)
         elif status is CassavaStatus.error:
-            print(_term.red(text), end=end)
+            print(prefix + _term.red(text), end=end)
         elif status is CassavaStatus.neutral:
-            print(_term.blue(text), end=end)
+            print(prefix + _term.blue(text), end=end)
         else:
-            print(text, end=end)
+            print(prefix + text, end=end)
 
     def print_msg_table(self, table, indent=0, fmt='.2g'):
         """
@@ -301,8 +305,6 @@ class Cassava(object):
         :param fmt: A format specifier to apply to each data value
         :type fmt: str
         """
-
-        prefix = ' ' * indent
 
         # Dynamically calculate column lengths and data coords label lengths
         if len(table) > 0:
@@ -333,10 +335,10 @@ class Cassava(object):
         for i, row in enumerate(table):
             if i == 0:
                 text = ''.join([f'{k}'.ljust(col_lens[x]) for x,k in enumerate(row['data'])])
-                self.print_status(prefix + label_header.ljust(label_len) + text, row['status'])
+                self.print_status(label_header.ljust(label_len) + text, row['status'], indent=indent)
 
             text = ''.join([f'{v:{fmt}}'.ljust(col_lens[x]) for x,v in enumerate(row['data'].values())])
-            self.print_status(prefix + labels[i].ljust(label_len) + text, row['status'])
+            self.print_status(labels[i].ljust(label_len) + text, row['status'], indent=indent)
 
     def compute_multi_plot_layout(self, ncols=2):
         """
@@ -648,19 +650,18 @@ class Cassava(object):
         """
 
         print('Column counts:')
-        indent = ' ' * INDENT
 
         for msg in self.check_column_counts():
             row_text = 'first row' if msg['data']['is_first_row'] else 'row'
-            text = '{}{} {}: ncols = {}'.format(indent, row_text, msg['y'], msg['data']['ncols'])
+            text = '{} {}: ncols = {}'.format(row_text, msg['y'], msg['data']['ncols'])
 
             if(self.conf['verbose']):
-                self.print_status(text, msg['status'])
+                self.print_status(text, msg['status'], indent=INDENT)
             else:
                 if msg['data']['is_first_row']:
-                    self.print_status(text, msg['status'])
+                    self.print_status(text, msg['status'], indent=INDENT)
                 elif msg['status'] in [CassavaStatus.warn, CassavaStatus.error]:
-                    self.print_status(text, msg['status'])
+                    self.print_status(text, msg['status'], indent=INDENT)
 
     def print_row_counts(self):
         """
@@ -668,7 +669,6 @@ class Cassava(object):
         """
 
         print('Row counts:')
-        indent = ' ' * INDENT
 
         status = CassavaStatus.ok
         total_nrows = len(self.rows)
@@ -678,8 +678,8 @@ class Cassava(object):
         except KeyError:
             data_nrows = total_nrows
 
-        text = '{}total rows = {}, data rows = {}'.format(indent, total_nrows, data_nrows)
-        self.print_status(text, status)
+        text = 'total rows = {}, data rows = {}'.format(total_nrows, data_nrows)
+        self.print_status(text, status, indent=INDENT)
 
     def print_empty_columns(self):
         """
@@ -687,16 +687,15 @@ class Cassava(object):
         """
 
         print('Empty columns:')
-        indent = ' ' * INDENT
 
         for msg in self.check_empty_columns():
-            text = '{}column {} is {}empty'.format(indent, msg['x'], '' if msg['data']['is_empty'] else 'not ')
+            text = 'column {} is {}empty'.format(msg['x'], '' if msg['data']['is_empty'] else 'not ')
 
             if msg['data']['is_empty']:
-                self.print_status(text, msg['status'])
+                self.print_status(text, msg['status'], indent=INDENT)
             else:
                 if(self.conf['verbose']):
-                    self.print_status(text, msg['status'])
+                    self.print_status(text, msg['status'], indent=INDENT)
 
     def print_empty_rows(self):
         """
@@ -704,16 +703,15 @@ class Cassava(object):
         """
 
         print('Empty rows:')
-        indent = ' ' * INDENT
 
         for msg in self.check_empty_rows():
-            text = '{}row {} is {}empty'.format(indent, msg['y'], '' if msg['data']['is_empty'] else 'not ')
+            text = 'row {} is {}empty'.format(msg['y'], '' if msg['data']['is_empty'] else 'not ')
 
             if msg['data']['is_empty']:
-                self.print_status(text, msg['status'])
+                self.print_status(text, msg['status'], indent=INDENT)
             else:
                 if(self.conf['verbose']):
-                    self.print_status(text, msg['status'])
+                    self.print_status(text, msg['status'], indent=INDENT)
 
     def print_column_stats(self):
         """
