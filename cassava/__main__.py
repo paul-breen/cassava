@@ -24,9 +24,13 @@ datetime,v1,v2,v3
 31/12/2020 00:00:00,1.0,1.1,0.9
 31/12/2020 00:01:00,1.0,1.2,1.1
 
-Then the following invocation will allow all three variables to be plotted on a single plot as a timeseries:
+Then the following invocation will allow all three variables to be plotted on a single plot as a timeseries, to allow a visual QC inspection:
 
-python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 plot input.csv
+python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 plot qc input.csv
+
+and this will print a QC report, instead of plotting:
+
+python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc input.csv
 """
 
     parser = argparse.ArgumentParser(description='plot and quality-check CSV (or similarly-delimited) data files', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
