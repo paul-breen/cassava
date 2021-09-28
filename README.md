@@ -2,6 +2,14 @@
 
 Cassava is a package for reading, plotting and quality-checking CSV files.  It's primary purpose is for giving a quick, first assessment of a CSV file, highlighting common quality issues such as wholly empty columns or rows, differing column counts and basic outlier detection.  The package can be integrated as part of a larger workflow, or used directly from the command line with a simple but functional command line interface (CLI).
 
+## Install
+
+The package can be installed from PyPI (note the package distribution name):
+
+```bash
+$ pip install cassava-csv
+```
+
 ## From the command line
 
 The cassava CLI runs in a number of modes.  The main commands are `plot`, to visually inspect a file, and `print`, to print its findings to `stdout`.  For each of these commands, there are two subcommands; `qc` for producing a QC plot or report, and `stats` for producing a summary statistics plot or report.  There are then many options to specify how to read and process the CSV file, e.g., whether it has a header row, which column to use for the x-axis in the plot, which columns to use for the y-axis in the plot etc.
