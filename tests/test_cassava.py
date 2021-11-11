@@ -130,6 +130,27 @@ def test_get_column_data_column_invalid_column_forgive_mode_custom_exc_value(dum
     data = f.get_column_data(11, exc_value=-999)
     assert data == [-999,-999,-999,-999,-999,-999,-999,-999,-999,-999]
 
+def test_get_column_data_datetime_ok():
+    in_file = base + '/data/dt-valid.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'xcol': 0,
+        'ycol': [1],
+        'x_as_datetime': True
+    }
+    conf.update(opts)
+    dts = ['1999-12-31T23:50:00','1999-12-31T23:51:00','1999-12-31T23:52:00','1999-12-31T23:53:00','1999-12-31T23:54:00','1999-12-31T23:55:00','1999-12-31T23:56:00','1999-12-31T23:57:00','1999-12-31T23:58:00','1999-12-31T23:59:00']
+    expected = dt_strs_to_dts(dts, fmt='%Y-%m-%dT%H:%M:%S')
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+
+        # This is the underlying function of get_x_axis_data()
+        x = f.get_column_data(f.conf['xcol'], f.conf['datetime_format'], func=datetime.datetime.strptime)
+        assert x == expected
+
 def test_get_x_axis_data_datetime_ok():
     in_file = base + '/data/dt-valid.csv'
     conf = cassava.Cassava.DEFAULTS.copy()
