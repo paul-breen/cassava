@@ -1,5 +1,6 @@
 __version__ = '0.1.0'
 
+import sys
 import csv
 import datetime
 from enum import Enum
@@ -55,6 +56,40 @@ class Cassava(object):
         self.fp = None
         self.header_row = []
         self.rows = []
+        sys.excepthook = self._exception_handler
+
+    def _exception_handler(self, etype, e, tb, verbose_hook=sys.excepthook):
+        """
+        Custom exception handler to provide focused exception reporting
+
+        If running in verbose mode, then exceptions are printed using the
+        given verbose_hook function.  This defaults to the system default,
+        so exceptions will be printed in the normal manner and the program
+        terminated.
+
+        If not in verbose mode, then only the exception message is printed
+        and it is colour-coded as a CassavaError.  If running in forgive
+        mode, the program continues, otherwise the program is immediately
+        terminated.
+
+        :param etype: The exception type
+        :type etype: Exception type
+        :param e: The exception to handle
+        :type e: Exception
+        :param tb: The exception traceback
+        :type tb: Exception traceback
+        :param verbose_hook: Function to handle verbose exception output
+        :type verbose_hook: Function
+        :raises: e
+        """
+
+        if(self.conf['verbose']):
+            verbose_hook(etype, e, tb)
+        else:
+            self.print_status(str(e), CassavaStatus.error)
+
+            if not self.conf['forgive']:
+                sys.exit()
  
     def __enter__(self):
         """
@@ -165,55 +200,37 @@ class Cassava(object):
 
         return labels
 
-    def _raise(self, e):
-        """
-        Enable an exception to be raised in a lambda expression
-
-        :param e: The exception to raise
-        :type e: Exception
-        :raises: e
-        """
-
-        raise e
-
-    def _catch(self, func, handle=lambda e: e, *args, **kwargs):
-        """
-        Enable a function to be exception handled, inline in comprehensions
-
-        :param func: The processing function
-        :type func: Function
-        :param handle: Exception handling function
-        :type handle: Function
-        :param args: Arbitrary arguments for the processing function
-        :type args: args
-        :param kwargs: Arbitrary keyword arguments for the processing function
-        :type kwargs: kwargs
-        :returns: The output of the processing function, or if an exception
-        occurs, the output of the exception handling function
-        """
-
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            return handle(e)
-
-    def get_column_data(self, col, exc_value=np.nan):
+    def get_column_data(self, col, *args, exc_value=np.nan, func=float, **kwargs):
         """
         Get the data for the given column, taking into account forgive mode
 
+        Provides data context and chaining for exceptions
+
         :param col: The column index
         :type col: int
+        :param args: Arbitrary arguments for the processing function
+        :type args: args
         :param exc_value: The value to use in place of values that throw an
         exception, when running in forgive mode
         :type exc_value: any
+        :param func: The processing function to apply to each datum
+        :type func: Function
+        :param kwargs: Arbitrary keyword arguments for the processing function
+        :type kwargs: kwargs
         :returns: The column data
         :rtype: list
         """
 
-        if self.conf['forgive']:
-            data = [self._catch(lambda: float(row[col]), handle=lambda e: exc_value) for row in self.rows[self.conf['first_data_row']:len(self.rows)]]
-        else:
-            data = [float(row[col]) for row in self.rows[self.conf['first_data_row']:len(self.rows)]]
+        data = []
+
+        for i, row in enumerate(self.rows[self.conf['first_data_row']:len(self.rows)], start=self.conf['first_data_row']):
+            try:
+                data.append(func(row[col], *args, **kwargs))
+            except Exception as e:
+                if self.conf['forgive']:
+                    data.append(exc_value)
+                else:
+                    raise type(e)(f'Failed to convert column {col} at row {i} with {func.__name__}: {row}. Cause: {str(e)}') from e
 
         return data
 
@@ -231,7 +248,7 @@ class Cassava(object):
         # The x-column can be datetime, numeric, or default to list of indices
         if self.conf['xcol'] is not None:
             if self.conf['x_as_datetime']:
-                x = [self._catch(lambda: datetime.datetime.strptime(row[self.conf['xcol']], self.conf['datetime_format']), handle=lambda e: self._raise(ValueError(f'Failed to convert x-column at row {i} to datetime: {row}'))) for i, row in enumerate(self.rows[self.conf['first_data_row']:len(self.rows)], start=self.conf['first_data_row'])]
+                x = self.get_column_data(self.conf['xcol'], self.conf['datetime_format'], func=datetime.datetime.strptime)
             else:
                 x = self.get_column_data(self.conf['xcol'], exc_value=exc_value)
         else:

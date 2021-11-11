@@ -89,13 +89,12 @@ Often a quick plot will tell us a lot about our data, so let's try that.  If our
 
 ```bash
 $ python -m cassava plot data.csv
-
-...
-
-ValueError: could not convert string to float: 'Datetime'
+Failed to convert column 0 at row 0 with float: ['Datetime', 'Temperature', 'Relative_Humidity', 'Sea_Level_Pressure', 'Wind_Speed', '', '', '']. Cause: could not convert string to float: 'Datetime'
 ```
 
 however in this case, the default y-axis column (0) contains ISO datetime strings, and the first row is a header row, so cassava will raise the above exception.
+
+Note that by default, cassava will return focused, colour-coded exception messages, with the data context where appropriate.  To see the full, chained exceptions including the tracebacks (as per normal Python exception reporting), run cassava in verbose mode (`-v`).
 
 At this point, we could replace the `plot` command with `print`, and get some useful QC information about the file, as the `print` command doesn't need to interpret the data as much as the `plot` command does.
 
@@ -118,20 +117,14 @@ Let's provide a few more options for processing.  First we can address the notif
 
 ```bash
 $ python -m cassava -H 0 -i 1 -x 0 -d -y 1 plot qc data.csv
-
-...
-
-ValueError: Failed to convert x-column at row 11 to datetime: ['', '', '', '', '', '', '', '']
+Failed to convert column 0 at row 11 with strptime: ['', '', '', '', '', '', '', '']. Cause: time data '' does not match format '%Y-%m-%dT%H:%M:%S'
 ```
 
-This is valuable QC information, as it tells us exactly the row that failed to parse as a datetime.  Particularly useful if the file is large.  At this point we could address the issue directly, by editing the CSV file accordingly (in this example, by removing the empty trailing rows), or just run cassava without specifying the x-axis data (cassava then defaults to integer indices).  Let's do the latter:
+This is valuable QC information, as it tells us exactly the row that failed to parse as a datetime (again, we can run in verbose mode to see the chained tracebacks).  Particularly useful if the file is large.  At this point we could address the issue directly, by editing the CSV file accordingly (in this example, by removing the empty trailing rows), or just run cassava without specifying the x-axis data (cassava then defaults to integer indices).  Let's do the latter:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -y 1 plot qc data.csv
-
-...
-
-ValueError: could not convert string to float: '' 
+Failed to convert column 1 at row 11 with float: ['', '', '', '', '', '', '', '']. Cause: could not convert string to float: ''
 ```
 
 More valuable QC information!  The empty rows at the bottom of the file cause this exception.  Let's reintroduce the forgive option.  This allows us to get on with evaluating the data, but of course eventually, we will remove those empty rows.
