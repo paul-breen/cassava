@@ -39,6 +39,39 @@ def test_parse_cmdln_unescaped_tab_delimiter():
     args = m.parse_cmdln()
     assert args.delimiter == '\t'
 
+def test_parse_cmdln_common_header_row():
+    sys.argv = ['main', '-C', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.common_header_row is True
+    assert args.header_row == 0
+    assert args.first_data_row == 1
+
+def test_parse_cmdln_common_header_row_overrides_opts():
+    sys.argv = ['main', '-C', '-H', '7', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.common_header_row is True
+    assert args.header_row == 0
+    assert args.first_data_row == 1
+
+    sys.argv = ['main', '-C', '-i', '8', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.common_header_row is True
+    assert args.header_row == 0
+    assert args.first_data_row == 1
+
+    sys.argv = ['main', '-C', '-H', '7', '-i', '8', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.common_header_row is True
+    assert args.header_row == 0
+    assert args.first_data_row == 1
+
+def test_parse_cmdln_when_no_common_header_row_instead_uses_opts():
+    sys.argv = ['main', '-H', '7', '-i', '8', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.common_header_row is False
+    assert args.header_row == 7
+    assert args.first_data_row == 8
+
 def test_main_print_qc():
     in_file = base + '/data/dt-valid.csv'
     sys.argv = ['main', '-H', '0', '-i', '1', '-y', '1', 'print', 'qc', in_file]
