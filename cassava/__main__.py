@@ -79,6 +79,10 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     if DEF_OPT_DELIMITER in str(args.ycol):
         args.ycol = args.ycol.split(DEF_OPT_DELIMITER)
 
+    # ycol must be a list, so that we don't iterate over digits in a string
+    if not isinstance(args.ycol, list):
+        args.ycol = [args.ycol]
+
     # Ensure ycol is an int list after all processing
     args.ycol = [int(ycol) for ycol in args.ycol]
 
