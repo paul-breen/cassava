@@ -38,6 +38,9 @@ Note that the options are global to all modes (commands and subcommands), even w
                         row containing the header
   -i FIRST_DATA_ROW, --first-data-row FIRST_DATA_ROW
                         first row containing data to plot
+  -C, --common-header-row
+                        shorthand for -H 0 -i 1, as this is such a commonplace
+                        configuration
   -x XCOL, --x-column XCOL
                         column containing values for the x-axis
   -y YCOL, --y-column YCOL
@@ -113,7 +116,7 @@ No handles with labels found to put in legend.
 
 That works, and produces a line plot of the `Temperature` data.  This is a minimal working command line for plotting this file, but we can do better!
 
-Let's provide a few more options for processing.  First we can address the notification that `matplotlib` emitted about no labels for the legend.  We can tell cassava that the first row (row 0 - all cassava coordinates have origin zero) is a header row (`-H 0`) and the first data row is the next row (`-i 1`).  Having these as two separate options gives us flexibility for cases where the CSV file may have a complex structured header section.  Furthermore, we note that this is a timeseries, so we can provide options to cassava so that it can treat it as such.  We specify the x-axis data as column 0 (`-x 0`), and tell cassava to treat the x-axis as a datetime column (`-d`).  The datetime format is ISO 8601, which is the cassava default, so we don't need to specify the datetime format.  Trying this also raises an exception:
+Let's provide a few more options for processing.  First we can address the notification that `matplotlib` emitted about no labels for the legend.  We can tell cassava that the first row (row 0 - all cassava coordinates have origin zero) is a header row (`-H 0`) and the first data row is the next row (`-i 1`).  Having these as two separate options gives us flexibility for cases where the CSV file may have a complex structured header section.  However, as this is such a commonplace header configuration, there is a shorthand option (`-C`), which is identical to `-H 0 -i 1`.  Furthermore, we note that this is a timeseries, so we can provide options to cassava so that it can treat it as such.  We specify the x-axis data as column 0 (`-x 0`), and tell cassava to treat the x-axis as a datetime column (`-d`).  The datetime format is ISO 8601, which is the cassava default, so we don't need to specify the datetime format.  Trying this also raises an exception:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -x 0 -d -y 1 plot qc data.csv
