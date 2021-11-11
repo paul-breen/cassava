@@ -54,6 +54,7 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     parser.add_argument('in_file', help='input file')
     parser.add_argument('-H', '--header-row', help='row containing the header', dest='header_row', type=int, default=Cassava.DEFAULTS['header_row'])
     parser.add_argument('-i', '--first-data-row', help='first row containing data to plot', dest='first_data_row', default=Cassava.DEFAULTS['first_data_row'], type=int)
+    parser.add_argument('-C', '--common-header-row', help='shorthand for -H 0 -i 1, as this is such a commonplace configuration', action='store_true')
     parser.add_argument('-x', '--x-column', help='column containing values for the x-axis', dest='xcol', default=Cassava.DEFAULTS['xcol'], type=int)
     parser.add_argument('-y', '--y-column', help='column containing values for the y-axis (specify multiple columns separated by commas to plot multiple curves on y-axis)', dest='ycol', default=str(Cassava.DEFAULTS['ycol'][0]), type=str)
     parser.add_argument('-d', '--x-as-datetime', help='treat the x-axis values as datetimes', action='store_true', default=Cassava.DEFAULTS['x_as_datetime'])
@@ -69,6 +70,11 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     parser.add_argument('-v', '--verbose', help='emit verbose messages', dest='verbose', action='store_true', default=Cassava.DEFAULTS['verbose'])
 
     args = parser.parse_args()
+
+    # This is shorthand for a common header configuration
+    if args.common_header_row:
+        args.header_row = 0
+        args.first_data_row = 1
 
     # Check whether delimiter was specified as a tab.  If so, it will have
     # been escaped, so we unescape it so that it appears as a tab
