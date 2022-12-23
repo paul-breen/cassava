@@ -3,10 +3,39 @@ import argparse
 from cassava import Cassava
 
 DEF_OPT_DELIMITER = ','
+DEF_OPT_RANGE_DELIMITER = '-'
 COMMANDS = {
     'plot': {'subcommands': ['qc','stats']},
     'print': {'subcommands': ['qc','stats']}
 }
+
+def str_range_list_to_list(x, item_sep=DEF_OPT_DELIMITER, range_sep=DEF_OPT_RANGE_DELIMITER):
+    """
+    Convert a string range list to a list
+
+    For example, given '1,2,3,8-12,14,17', return [1,2,3,8,9,10,11,12,14,17]
+
+    :param x: String, possibly including a range specification
+    :type x: str
+    :param item_sep: The separator between items in the string
+    :type item_sep: str
+    :param range_sep: The separator between range end-points in the string
+    :type range_sep: str
+    :returns: The fully actualised list
+    :rtype: list
+    """
+
+    y = []
+    items = x.split(item_sep)
+
+    for i in items:
+        if range_sep in i:
+            lim = i.split(range_sep)
+            y.extend([r for r in range(int(lim[0]), int(lim[1])+1)])
+        else:
+            y.append(i)
+
+    return y
 
 def parse_cmdln():
     """
@@ -82,8 +111,8 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
         args.delimiter = '\t'
 
     # ycol option can have multiple delimited values
-    if DEF_OPT_DELIMITER in str(args.ycol):
-        args.ycol = args.ycol.split(DEF_OPT_DELIMITER)
+    if DEF_OPT_DELIMITER in str(args.ycol) or DEF_OPT_RANGE_DELIMITER in str(args.ycol):
+        args.ycol = str_range_list_to_list(args.ycol)
 
     # ycol must be a list, so that we don't iterate over digits in a string
     if not isinstance(args.ycol, list):

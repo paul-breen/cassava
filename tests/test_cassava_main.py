@@ -29,6 +29,16 @@ def test_parse_cmdln_multiple_y_columns_multiple_digits():
     args = m.parse_cmdln()
     assert args.ycol == [32,33]
 
+def test_parse_cmdln_multiple_y_columns_range():
+    sys.argv = ['main', '-y', '3-6', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.ycol == [3,4,5,6]
+
+def test_parse_cmdln_multiple_y_columns_individual_and_range():
+    sys.argv = ['main', '-y', '1,2,3,8-12,14,17', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.ycol == [1,2,3,8,9,10,11,12,14,17]
+
 def test_parse_cmdln_escaped_tab_delimiter():
     sys.argv = ['main', '-l', '\\t', 'plot', 'qc', 'data.csv']
     args = m.parse_cmdln()
