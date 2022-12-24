@@ -35,6 +35,7 @@ class Cassava(object):
         'ycol': [0],
         'x_as_datetime': False,
         'datetime_format': '%Y-%m-%dT%H:%M:%S',
+        'missing_value': None,
         'delimiter': ',',
         'skip_initial_space': False,
         'forgive': False,
@@ -200,6 +201,21 @@ class Cassava(object):
 
         return labels
 
+    def to_float_with_missing_value(self, value, missing_value):
+        """
+        Convert the given value to a float, or to NaN if it matches
+        missing_value
+
+        :param value: The column value (string representation)
+        :type value: str
+        :param missing_value: The value to treat as a missing value
+        :type missing_value: str
+        :returns: The value as a float or np.nan if it matches missing_value
+        :rtype: float or np.nan
+        """
+
+        return np.nan if str(value) == str(missing_value) else float(value)
+
     def get_column_data(self, col, *args, exc_value=np.nan, func=float, **kwargs):
         """
         Get the data for the given column, taking into account forgive mode
@@ -250,7 +266,10 @@ class Cassava(object):
             if self.conf['x_as_datetime']:
                 x = self.get_column_data(self.conf['xcol'], self.conf['datetime_format'], func=datetime.datetime.strptime)
             else:
-                x = self.get_column_data(self.conf['xcol'], exc_value=exc_value)
+                if self.conf['missing_value'] is not None:
+                    x = self.get_column_data(self.conf['xcol'], self.conf['missing_value'], exc_value=exc_value, func=self.to_float_with_missing_value)
+                else:
+                    x = self.get_column_data(self.conf['xcol'], exc_value=exc_value)
         else:
             x = [i for i, n in enumerate(range(self.conf['first_data_row'], len(self.rows)))]
 
@@ -269,7 +288,12 @@ class Cassava(object):
         :rtype: list
         """
 
-        return self.get_column_data(col, exc_value=exc_value)
+        if self.conf['missing_value'] is not None:
+            y = self.get_column_data(col, self.conf['missing_value'], exc_value=exc_value, func=self.to_float_with_missing_value)
+        else:
+            y = self.get_column_data(col, exc_value=exc_value)
+
+        return y
 
     def compute_stats(self, data):
         """

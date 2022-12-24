@@ -45,11 +45,13 @@ Note that the options are global to all modes (commands and subcommands), even w
                         column containing values for the x-axis
   -y YCOL, --y-column YCOL
                         column containing values for the y-axis (specify
-                        multiple columns separated by commas to plot multiple
-                        curves on y-axis)
+                        multiple columns separated by commas and/or as ranges
+                        to plot multiple curves on y-axis)
   -d, --x-as-datetime   treat the x-axis values as datetimes
   -f DATETIME_FORMAT, --datetime-format DATETIME_FORMAT
                         datetime format specification
+  -m MISSING_VALUE, --missing-value MISSING_VALUE
+                        value to be treated as missing data
   -l DELIMITER, --delimiter DELIMITER
                         alternative delimiter
   -s, --skip-initial-space
@@ -136,10 +138,13 @@ More valuable QC information!  The empty rows at the bottom of the file cause th
 $ python -m cassava -H 0 -i 1 -y 1 -F plot qc data.csv
 ```
 
-This gives us a nice working command line.  Now let's plot all the numeric columns.  We can specify multiple columns for the y-axis by giving a comma-separated list:
+This gives us a nice working command line.  Now let's plot all the numeric columns.  We can specify multiple columns for the y-axis by giving a comma-separated list and/or an inclusive range - the following are all equivalent:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F plot qc data.csv
+$ python -m cassava -H 0 -i 1 -y 1,2,3-4 -F plot qc data.csv
+$ python -m cassava -H 0 -i 1 -y 1,2-4 -F plot qc data.csv
+$ python -m cassava -H 0 -i 1 -y 1-4 -F plot qc data.csv
 ```
 
 This works, but as the `Sea_Level_Pressure` values are far greater than the other columns, it's not easy to pick out the detail.  We could drop the `Sea_Level_Pressure` column from the y-axis list (`-y 1,2,4`).  This is an improvement, but the outlier in `Wind_Speed` is now causing problems.  In cases where your data are of greatly differing scales, it's better to plot multiple curves on separate plots.  This can be achieved using the `-N NCOLS` option, which tells cassava to plot a grid of NCOLS-wide plots:
@@ -149,6 +154,12 @@ $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 plot qc data.csv
 ```
 
 This plots a 2x2 grid of plots, with each variable in its own plot, with a suitably-scaled y-axis.
+
+Another case where you may find large values are obscuring the detail, is where missing values in the data have been specified by a value that is outside of the data domain - for example `-999`.  In such a case, we can tell cassava to treat these values as missing data and replace them with NaN.  This will then mean that they are not shown when plotting the data:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 plot qc data.csv
+```
 
 For any of the working command lines above, we could replace the `qc` subcommand with the `stats` subcommand, to get summary statistics plots for the specified y-columns.  Let's do that for the last command line.  The first thing to note, is that the `-N 2` option is not required for stats plots.  However, as noted above, it doesn't hurt to leave it there and thus allows for rapid tweak/repeat cycles:
 
@@ -235,6 +246,7 @@ As can be seen above, cassava requires a fully-specified configuration `dict`, s
         'ycol': [0],
         'x_as_datetime': False,
         'datetime_format': '%Y-%m-%dT%H:%M:%S',
+        'missing_value': None,
         'delimiter': ',',
         'skip_initial_space': False,
         'forgive': False,
@@ -248,6 +260,7 @@ As can be seen above, cassava requires a fully-specified configuration `dict`, s
 * ycol: Integer column index `list` from the input file for the plot y-axis
 * x_as_datetime: Consider the x-axis data as datetime strings
 * datetime_format: `datetime.datetime.strptime()` format specification
+* missing_value: Value in the data that indicates a missing datum (e.g. -999)
 * delimiter: Column delimiter character
 * skip_initial_space: Skip any spaces following the delimiter character
 * forgive: Forgive mode. Replace invalid numeric values with placeholder (NaN)

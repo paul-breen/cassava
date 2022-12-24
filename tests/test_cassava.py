@@ -76,7 +76,25 @@ def cells_missing_cassava():
         f.read()
 
         yield f
- 
+
+@pytest.fixture
+def missing_values_cassava():
+    in_file = base + '/data/missing-values.csv'
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'xcol': 0,
+        'ycol': [1],
+        'x_as_datetime': True
+    }
+    conf = cassava.Cassava.DEFAULTS.copy()
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+
+        yield f
+
 def test_store_header_ok(dummy_cassava):
     f = dummy_cassava
     assert f.header_row == ['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9']
@@ -130,6 +148,44 @@ def test_get_column_data_column_invalid_column_forgive_mode_custom_exc_value(dum
     data = f.get_column_data(11, exc_value=-999)
     assert data == [-999,-999,-999,-999,-999,-999,-999,-999,-999,-999]
 
+@pytest.mark.parametrize(['col','missing_value','expected'], [
+(1, '-999', [0,-1,-9999,np.nan,-4,np.nan,-99,-9999,-999.99,-9]),
+(1, -999, [0,-1,-9999,np.nan,-4,np.nan,-99,-9999,-999.99,-9]),
+(1, '-9999', [0,-1,np.nan,-999,-4,-999,-99,np.nan,-999.99,-9]),
+(1, -9999, [0,-1,np.nan,-999,-4,-999,-99,np.nan,-999.99,-9]),
+(1, '0', [np.nan,-1,-9999,-999,-4,-999,-99,-9999,-999.99,-9]),
+(1, 0, [np.nan,-1,-9999,-999,-4,-999,-99,-9999,-999.99,-9]),
+(1, '-99999', [0,-1,-9999,-999,-4,-999,-99,-9999,-999.99,-9]),
+(1, -99999, [0,-1,-9999,-999,-4,-999,-99,-9999,-999.99,-9]),
+(1, '-999.99', [0,-1,-9999,-999,-4,-999,-99,-9999,np.nan,-9]),
+(1, -999.99, [0,-1,-9999,-999,-4,-999,-99,-9999,np.nan,-9])
+])
+def test_get_column_data_with_missing_value(missing_values_cassava, col, missing_value, expected):
+    f = missing_values_cassava
+    data = f.get_column_data(col, missing_value, func=f.to_float_with_missing_value)
+    assert data == expected
+
+@pytest.mark.parametrize(['col','missing_value','values','expected'], [
+(0, 'NaN', [[0],[-1],['NaN'],[-999],[-4]], [0,-1,np.nan,-999,-4]),
+(0, 'None', [[0],[-1],['None'],[-999],[-4]], [0,-1,np.nan,-999,-4]),
+(0, 'null', [[0],[-1],['null'],[-999],[-4]], [0,-1,np.nan,-999,-4]),
+])
+def test_get_column_data_with_non_numeric_missing_value(init_cassava, col, missing_value, values, expected):
+    # NaN is an odd case.  If it is present in the data, but not specified as
+    # the missing_value, then float() will parse it as (math) nan.  Note that
+    # this is distinct to np.nan, and can't be tested by equality, i.e. 
+    # float('NaN') != float('NaN')
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1
+    }
+    rows = [['v0'], *values]
+    f = init_cassava(opts)
+    f.rows = rows
+    f.store_header()
+    data = f.get_column_data(col, missing_value, func=f.to_float_with_missing_value)
+    assert data == expected
+
 def test_get_column_data_datetime_ok():
     in_file = base + '/data/dt-valid.csv'
     conf = cassava.Cassava.DEFAULTS.copy()
@@ -150,6 +206,44 @@ def test_get_column_data_datetime_ok():
         # This is the underlying function of get_x_axis_data()
         x = f.get_column_data(f.conf['xcol'], f.conf['datetime_format'], func=datetime.datetime.strptime)
         assert x == expected
+
+def test_get_x_axis_data_with_missing_value(init_cassava):
+    # Probably unusual to have x-column with missing values, but doesn't hurt
+    # to test
+    values = [[0,0],[-999,-1],[2,-2],[3,-999],[4,-4]]
+    expected = [0,np.nan,2,3,4]
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'xcol': 0,
+        'ycol': [1],
+        'x_as_datetime': False,
+        'missing_value': '-999'
+    }
+    rows = [['x','y'], *values]
+    f = init_cassava(opts)
+    f.rows = rows
+    f.store_header()
+    x = f.get_x_axis_data()
+    assert x == expected
+
+def test_get_y_axis_data_with_missing_value(init_cassava):
+    values = [[0,0],[1,-1],[2,-2],[3,-999],[4,-4]]
+    expected = [0,-1,-2,np.nan,-4]
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'xcol': 0,
+        'ycol': [1],
+        'x_as_datetime': False,
+        'missing_value': '-999'
+    }
+    rows = [['x','y'], *values]
+    f = init_cassava(opts)
+    f.rows = rows
+    f.store_header()
+    y = f.get_y_axis_data(f.conf['ycol'][0])
+    assert y == expected
 
 def test_get_x_axis_data_datetime_ok():
     in_file = base + '/data/dt-valid.csv'
