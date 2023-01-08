@@ -67,6 +67,7 @@ Note that the options are global to all modes (commands and subcommands), even w
                         object
   -S, --scatter-plot    set plot options (see -P) to produce a scatter plot
   -v, --verbose         emit verbose messages
+  -V, --version         show program's version number and exit
 ```
 
 ### Examples

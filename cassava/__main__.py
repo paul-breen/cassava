@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from cassava import Cassava
+from cassava import Cassava, __version__
 
 DEF_OPT_DELIMITER = ','
 DEF_OPT_RANGE_DELIMITER = '-'
@@ -63,7 +63,7 @@ and this will print a QC report, instead of plotting:
 python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc input.csv
 """
 
-    parser = argparse.ArgumentParser(description='plot and quality-check CSV (or similarly-delimited) data files', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description='plot and quality-check CSV (or similarly-delimited) data files', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter, prog='cassava')
 
     # Add commands.  These will appear before positional arguments on the
     # command line
@@ -101,6 +101,7 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     parser.add_argument('-S', '--scatter-plot', help="set plot options (see -P) to produce a scatter plot", dest='plot_opts', action='store_const', const={'marker': '.', 'ls': ''})
 
     parser.add_argument('-v', '--verbose', help='emit verbose messages', dest='verbose', action='store_true', default=Cassava.DEFAULTS['verbose'])
+    parser.add_argument('-V', '--version', action='version', version=f"%(prog)s {__version__}")
 
     args = parser.parse_args()
 
