@@ -9,7 +9,7 @@ import cassava
 base = os.path.dirname(__file__)
 
 def test_version():
-    assert cassava.__version__ == '0.2.1'
+    assert cassava.__version__ == '0.3.0'
 
 def dt_strs_to_dts(ds, fmt='%Y-%m-%dT%H:%M:%S'):
     return [datetime.datetime.strptime(d, fmt) for d in ds]
