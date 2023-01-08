@@ -15,6 +15,9 @@ packages = [
     {include = "cassava"}
 ]
 
+[tool.poetry.scripts]
+cassava = "cassava.__main__:main"
+
 [tool.poetry.dependencies]
 python = "^3.7"
 matplotlib = "^3.4.3"
