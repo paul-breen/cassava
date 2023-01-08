@@ -62,6 +62,10 @@ Note that the options are global to all modes (commands and subcommands), even w
   -k K, --tukey-fence-factor K
                         factor to multiply IQR by in Tukey's rule
   -O, --hide-outliers   don't show outliers on stats plots
+  -P PLOT_OPTS, --plot-options PLOT_OPTS
+                        options for the plot, specified as a simple JSON
+                        object
+  -S, --scatter-plot    set plot options (see -P) to produce a scatter plot
   -v, --verbose         emit verbose messages
 ```
 
@@ -161,7 +165,19 @@ Another case where you may find large values are obscuring the detail, is where 
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 plot qc data.csv
 ```
 
-For any of the working command lines above, we could replace the `qc` subcommand with the `stats` subcommand, to get summary statistics plots for the specified y-columns.  Let's do that for the last command line.  The first thing to note, is that the `-N 2` option is not required for stats plots.  However, as noted above, it doesn't hurt to leave it there and thus allows for rapid tweak/repeat cycles:
+If we have isolated points that are separated by NaN values (either direct NaN values or converted missing values), then the default plot type (a line plot) may not show these points, as matplotlib cannot draw a line segment between them.  In such a case, we can ask cassava to produce a scatter plot (`-S`) instead of a line plot:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -S plot qc data.csv
+```
+
+This scatter-plot option is actually a convenience option for the more general purpose plot-options option (`-P`), which takes a valid set of matplotlib plot options as a simple JSON object, and then converts it into a Python `dict`.  Note that as it's a JSON object, you must use double-quotes for the keys and any string values.  For example, the scatter-plot option above can equivalently be specified as:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' plot qc data.csv
+```
+
+For any of the working command lines above, we could replace the `qc` subcommand with the `stats` subcommand, to get summary statistics plots for the specified y-columns.  Let's do that for the 2x2 grid command line.  The first thing to note, is that the `-N 2` option is not required for stats plots.  However, as noted above, it doesn't hurt to leave it there and thus allows for rapid tweak/repeat cycles:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 plot stats data.csv

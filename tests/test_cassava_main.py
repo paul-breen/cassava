@@ -82,6 +82,22 @@ def test_parse_cmdln_when_no_common_header_row_instead_uses_opts():
     assert args.header_row == 7
     assert args.first_data_row == 8
 
+def test_parse_cmdln_no_plot_options():
+    sys.argv = ['main', '-C', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.plot_opts == {}
+
+def test_parse_cmdln_scatter_plot_options():
+    sys.argv = ['main', '-C', '-S', 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.plot_opts == {'marker': '.', 'ls': ''}
+
+def test_parse_cmdln_custom_plot_options():
+    json_opt_arg = '{"lw": 4, "c": "green", "ls": "--"}'
+    sys.argv = ['main', '-C', '-P', json_opt_arg, 'plot', 'qc', 'data.csv']
+    args = m.parse_cmdln()
+    assert args.plot_opts == {'lw': 4, 'c': 'green', 'ls': '--'}
+
 def test_main_print_qc():
     in_file = base + '/data/dt-valid.csv'
     sys.argv = ['main', '-H', '0', '-i', '1', '-y', '1', 'print', 'qc', in_file]

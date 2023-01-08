@@ -1,4 +1,5 @@
 import argparse
+import json
 
 from cassava import Cassava
 
@@ -96,6 +97,8 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     parser.add_argument('-N', '--plot-in-n-columns', help='number of columns for a multi-plot grid', dest='ncols', default=None, type=int)
     parser.add_argument('-k', '--tukey-fence-factor', help="factor to multiply IQR by in Tukey's rule", dest='k', default=1.5, type=float)
     parser.add_argument('-O', '--hide-outliers', help="don't show outliers on stats plots", dest='showfliers', action='store_false', default=True)
+    parser.add_argument('-P', '--plot-options', help="options for the plot, specified as a simple JSON object", dest='plot_opts', default={}, type=json.loads)
+    parser.add_argument('-S', '--scatter-plot', help="set plot options (see -P) to produce a scatter plot", dest='plot_opts', action='store_const', const={'marker': '.', 'ls': ''})
 
     parser.add_argument('-v', '--verbose', help='emit verbose messages', dest='verbose', action='store_true', default=Cassava.DEFAULTS['verbose'])
 
@@ -151,7 +154,7 @@ def main():
                 else:
                     layout = (1,1)
 
-                f.plot(layout=layout)
+                f.plot(layout=layout, opts=args.plot_opts)
             elif subcommand == 'stats':
                 f.plot_stats(k=args.k, showfliers=args.showfliers)
             else:
