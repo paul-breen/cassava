@@ -34,6 +34,8 @@ Note that the options are global to all modes (commands and subcommands), even w
 
 ```
   -h, --help            show this help message and exit
+  -e ENCODING, --encoding ENCODING
+                        character encoding of the input file
   -H HEADER_ROW, --header-row HEADER_ROW
                         row containing the header
   -i FIRST_DATA_ROW, --first-data-row FIRST_DATA_ROW
@@ -229,6 +231,25 @@ Column outliers (1.5 * IQR):
     4,9        2.3e+02 
 ```
 
+### A note on encodings
+
+The default character set encoding used to read an input file is UTF-8.  For input files that contain only numeric data, with the possible addition of datetime strings, this will normally suffice.  However, if the data include text labels with characters outside of the ASCII range, then it's possible that the file was encoded using a different encoding.  In such cases, the file can either be converted to UTF-8 (by using `iconv`, for example), or by specifying the file's encoding on the command line with the `--encoding` option.  The input to this option is the encoding name (e.g., UTF-8, ISO-8859-15 etc.).
+
+As an example, say a CSV file was exported from MS Excel, and the data contained some common Scandinavian characters.  When exporting this, it's possible that Excel will use the Windows-1252 encoding for the data.  This will cause `cassava` to fail to read the data in, as it's expecting UTF-8 encoded input.  Running `cassava` without specifying the encoding will result in an exception similar to the following:
+
+```bash
+$ python -m cassava -C print qc data.csv
+'utf-8' codec can't decode byte 0xe5 in position 62: invalid continuation byte
+```
+
+In such a case, the first task is to find out what the file's encoding is, and then tell `cassava` to use that encoding.  We can use a character set detection program, such as `uchardet`, to identify the encoding:
+
+```bash
+$ uchardet data.csv
+WINDOWS-1252
+$ python -m cassava --encoding WINDOWS-1252 -C print qc data.csv
+```
+
 ## Using the package
 
 To use cassava in your own code, setup a configuration `dict`, and then call the required methods from within the `Cassava` context manager:
@@ -313,13 +334,19 @@ The `Cassava` object has the following instance variables:
 
 ```python
         self.path = path
+        self.encoding = encoding
         self.conf = conf or self.DEFAULTS
         self.fp = None
         self.header_row = []
         self.rows = []
 ```
 
-`path` and `conf` are the input file path `str` and the configuration `dict` that are (optionally) passed to the constructor, as shown in the above examples.  `fp` is the file pointer for the input file.  `header_row` (a `list`) holds the (optional) header row, parsed from the input data, and `rows` (a `list` of `list`s) contains the data rows parsed from the input data.
+* path: The input file path (`str`)
+* encoding: The input file character set encoding (`str`)
+* conf: The configuration for the input file (`dict`)
+* fp: The file pointer for the input file (`file` object)
+* header_row: The (optional) header row, parsed from the input data (`list`)
+* rows: The data rows parsed from the input data (`list` of `list`s)
 
 ### Reading input data
 

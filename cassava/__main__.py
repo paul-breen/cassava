@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from cassava import Cassava, __version__
+from cassava import Cassava, __version__, ENCODING
 
 DEF_OPT_DELIMITER = ','
 DEF_OPT_RANGE_DELIMITER = '-'
@@ -82,6 +82,7 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
             subsub.set_defaults(subcommand=subcommand)
 
     parser.add_argument('in_file', help='input file')
+    parser.add_argument('-e', '--encoding', help='character encoding of the input file', dest='encoding', type=str, default=ENCODING)
     parser.add_argument('-H', '--header-row', help='row containing the header', dest='header_row', type=int, default=Cassava.DEFAULTS['header_row'])
     parser.add_argument('-i', '--first-data-row', help='first row containing data to plot', dest='first_data_row', default=Cassava.DEFAULTS['first_data_row'], type=int)
     parser.add_argument('-C', '--common-header-row', help='shorthand for -H 0 -i 1, as this is such a commonplace configuration', action='store_true')
@@ -138,14 +139,16 @@ def main():
 
     # All options go in the configuration
     in_file = args.in_file
+    encoding = args.encoding
     command = args.command
     subcommand = args.subcommand
     del args.in_file
+    del args.encoding
     del args.command
     del args.subcommand
     conf.update(vars(args))
 
-    with Cassava(path=in_file, conf=conf) as f:
+    with Cassava(path=in_file, encoding=encoding, conf=conf) as f:
         f.read()
 
         if command == 'plot':

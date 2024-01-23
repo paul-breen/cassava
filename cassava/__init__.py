@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from blessed import Terminal
 
+ENCODING = 'utf-8'
 INDENT = 4
 _term = Terminal()
 
@@ -42,17 +43,20 @@ class Cassava(object):
         'verbose': False
     }
  
-    def __init__(self, path=None, conf={}):
+    def __init__(self, path=None, encoding=ENCODING, conf={}):
         """
         Constructor
 
         :param path: File path
         :type path: str
+        :param encoding: File character encoding
+        :type encoding: str
         :param conf: Optional configuration
         :type conf: dict
         """
 
         self.path = path
+        self.encoding = encoding
         self.conf = conf or self.DEFAULTS
         self.fp = None
         self.header_row = []
@@ -102,7 +106,7 @@ class Cassava(object):
         :rtype: Cassava
         """
 
-        return self.open(path=self.path)
+        return self.open(path=self.path, encoding=self.encoding)
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
@@ -118,7 +122,7 @@ class Cassava(object):
 
         return False         # This ensures any exception is re-raised
 
-    def open(self, path=None, mode='r', encoding='utf-8'):
+    def open(self, path=None, mode='r', encoding=None):
         """
         Open the given path
 
@@ -126,7 +130,7 @@ class Cassava(object):
         :type path: str
         :param mode: Mode in which to open the file
         :type mode: str
-        :param encoding: Encoding of the file
+        :param encoding: File character encoding
         :type encoding: str
         :returns: This object
         :rtype: Cassava
@@ -135,7 +139,10 @@ class Cassava(object):
         if path:
             self.path = path
 
-        self.fp = open(self.path, mode, encoding=encoding)
+        if encoding:
+            self.encoding = encoding
+
+        self.fp = open(self.path, mode, encoding=self.encoding)
 
         return self
 

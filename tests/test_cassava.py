@@ -425,3 +425,83 @@ def test_check_column_outliers_iqr(dummy_cassava):
     expected = {'x': 1, 'y': 2, 'data': {'value': 1000}, 'status': cassava.CassavaStatus.error}
     assert msgs[0] == expected
 
+def test_read_utf8_encoded_file_implicitly():
+    in_file = base + '/data/encoded_utf-8.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'ycol': [1,2]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+
+def test_read_utf8_encoded_file_explicitly():
+    in_file = base + '/data/encoded_utf-8.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'ycol': [1,2]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, encoding='utf-8', conf=conf) as f:
+        f.read()
+
+def test_read_non_utf8_encoded_file_implicitly():
+    in_file = base + '/data/encoded_iso-8859-15.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'ycol': [1,2]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        with pytest.raises(UnicodeDecodeError):
+            f.read()
+
+def test_read_non_utf8_encoded_file_explicitly():
+    in_file = base + '/data/encoded_iso-8859-15.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'ycol': [1,2]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, encoding='utf-8', conf=conf) as f:
+        with pytest.raises(UnicodeDecodeError):
+            f.read()
+
+def test_read_non_utf8_encoded_file_with_correct_encoding():
+    in_file = base + '/data/encoded_iso-8859-15.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'ycol': [1,2]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, encoding='ISO-8859-15', conf=conf) as f:
+        f.read()
+
+def test_read_non_utf8_encoded_file_with_compatible_encoding():
+    in_file = base + '/data/encoded_iso-8859-15.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'ycol': [1,2]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, encoding='Windows-1252', conf=conf) as f:
+        f.read()
+
