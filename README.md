@@ -239,8 +239,10 @@ As an example, say a CSV file was exported from MS Excel, and the data contained
 
 ```bash
 $ python -m cassava -C print qc data.csv
-'utf-8' codec can't decode byte 0xe5 in position 62: invalid continuation byte
+'utf-8' codec can't decode byte 0xe5 in position 62: invalid continuation byte. Specify the encoding of the file (see the --encoding option). Error occurred in the block following line number 0. Failed input data context: b'ude (degree_north)\nV\xe5gsbreen,19.7338,80.4'
 ```
+
+Note that the exception message includes the (origin zero) line number after which the block containing the invalid byte is included.  The character is present on this line or on a line following this line number.  The exception message also contains some context (as a raw byte string) around the invalid byte, to aid finding it in the input file.
 
 In such a case, the first task is to find out what the file's encoding is, and then tell `cassava` to use that encoding.  We can use a character set detection program, such as `uchardet`, to identify the encoding:
 
