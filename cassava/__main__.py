@@ -136,8 +136,9 @@ def main():
 
     args = parse_cmdln()
     conf = Cassava.DEFAULTS.copy()
+    mode = 'r'
 
-    # All options go in the configuration
+    # Options go in the configuration
     in_file = args.in_file
     encoding = args.encoding
     command = args.command
@@ -148,7 +149,7 @@ def main():
     del args.subcommand
     conf.update(vars(args))
 
-    with Cassava(path=in_file, encoding=encoding, conf=conf) as f:
+    with Cassava(path=in_file, mode=mode, encoding=encoding, conf=conf) as f:
         f.read()
 
         if command == 'plot':

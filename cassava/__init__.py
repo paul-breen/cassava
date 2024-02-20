@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from blessed import Terminal
 
+MODE = 'r'
 ENCODING = 'utf-8'
 INDENT = 4
 _term = Terminal()
@@ -43,12 +44,14 @@ class Cassava(object):
         'verbose': False
     }
  
-    def __init__(self, path=None, encoding=ENCODING, conf={}):
+    def __init__(self, path=None, mode=MODE, encoding=ENCODING, conf={}):
         """
         Constructor
 
         :param path: File path
         :type path: str
+        :param mode: File open mode
+        :type mode: str
         :param encoding: File character encoding
         :type encoding: str
         :param conf: Optional configuration
@@ -56,6 +59,7 @@ class Cassava(object):
         """
 
         self.path = path
+        self.mode = mode
         self.encoding = encoding
         self.conf = conf or self.DEFAULTS
         self.fp = None
@@ -127,7 +131,7 @@ class Cassava(object):
         :rtype: Cassava
         """
 
-        return self.open(path=self.path, encoding=self.encoding)
+        return self.open(path=self.path, mode=self.mode, encoding=self.encoding)
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
@@ -143,13 +147,13 @@ class Cassava(object):
 
         return False         # This ensures any exception is re-raised
 
-    def open(self, path=None, mode='r', encoding=None):
+    def open(self, path=None, mode=None, encoding=None):
         """
         Open the given path
 
         :param path: File path
         :type path: str
-        :param mode: Mode in which to open the file
+        :param mode: File open mode
         :type mode: str
         :param encoding: File character encoding
         :type encoding: str
@@ -160,10 +164,13 @@ class Cassava(object):
         if path:
             self.path = path
 
+        if mode:
+            self.mode = mode
+
         if encoding:
             self.encoding = encoding
 
-        self.fp = open(self.path, mode, encoding=self.encoding)
+        self.fp = open(self.path, mode=self.mode, encoding=self.encoding)
 
         return self
 
