@@ -95,7 +95,28 @@ class Cassava(object):
 
             if not self.conf['forgive']:
                 sys.exit()
- 
+
+    def _get_unicode_decode_error_context(self, e, N=20):
+        """
+        Get context of the data that caused a UnicodeDecodeError exception
+
+        :param e: The exception object
+        :type e: Exception
+        :param N: The (max.) number of bytes to include in the context,
+        before and after the btye that caused the exception
+        :type N: int
+        :returns: The data context
+        :rtype: bytes
+        """
+
+        n = N if e.start > N else e.start
+        start = e.start - n
+        n = N if len(e.object) - e.end > N else len(e.object) - e.end
+        end = e.end + n
+        context = e.object[start:end]
+
+        return context
+
     def __enter__(self):
         """
         Enter the runtime context for this object
@@ -173,7 +194,14 @@ class Cassava(object):
         """
 
         reader = csv.reader(self.fp, delimiter=self.conf['delimiter'], skipinitialspace=self.conf['skip_initial_space'])
-        self.rows = [row for row in reader]
+
+        try:
+            self.rows = [row for row in reader]
+        except UnicodeDecodeError as e:
+            context = self._get_unicode_decode_error_context(e)
+            e.reason = f'{e.reason}. Specify the encoding of the file (see the --encoding option). Error occurred in the block following line number {reader.line_num}. Failed input data context: {context}'
+            raise e
+
         self.store_header()
 
         return self.rows
