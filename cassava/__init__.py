@@ -827,14 +827,18 @@ class Cassava(object):
         self.print_empty_columns()
         self.print_empty_rows()
 
-    def print_stats(self, k=1.5):
+    def print_stats(self, k=1.5, showfliers=True):
         """
         Print stats
 
         :param k: The factor to multiply the IQR by
         :type k: float
+        :param showfliers: Show the outliers table
+        :type showfliers: bool
         """
 
         self.print_column_stats()
-        self.print_column_outliers_iqr(k=k)
+
+        if showfliers:
+            self.print_column_outliers_iqr(k=k)
 

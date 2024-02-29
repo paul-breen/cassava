@@ -168,7 +168,7 @@ def main():
             if subcommand == 'qc':
                 f.print_qc()
             elif subcommand == 'stats':
-                f.print_stats(k=args.k)
+                f.print_stats(k=args.k, showfliers=args.showfliers)
             else:
                 raise ValueError('Unsupported subcommand')
         else:
