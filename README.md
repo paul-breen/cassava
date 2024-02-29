@@ -1,6 +1,6 @@
 # cassava
 
-Cassava is a package for reading, plotting and quality-checking CSV files.  It's primary purpose is for giving a quick, first assessment of a CSV file, highlighting common quality issues such as wholly empty columns or rows, differing column counts and basic outlier detection.  The package can be integrated as part of a larger workflow, or used directly from the command line with a simple but functional command line interface (CLI).
+Cassava is a package for reading, plotting and quality-checking CSV files.  Its primary purpose is for giving a quick, first assessment of a CSV file, highlighting common quality issues such as wholly empty columns or rows, differing column counts and basic outlier detection.  The package can be integrated as part of a larger workflow, or used directly from the command line with a simple but functional command line interface (CLI).
 
 ## Install
 
