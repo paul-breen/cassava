@@ -348,6 +348,7 @@ The `Cassava` object has the following instance variables:
 
 ```python
         self.path = path
+        self.mode = mode
         self.encoding = encoding
         self.conf = conf or self.DEFAULTS
         self.fp = None
@@ -356,6 +357,7 @@ The `Cassava` object has the following instance variables:
 ```
 
 * path: The input file path (`str`)
+* mode: The input file open mode (`str`)
 * encoding: The input file character set encoding (`str`)
 * conf: The configuration for the input file (`dict`)
 * fp: The file pointer for the input file (`file` object)
