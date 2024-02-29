@@ -219,7 +219,7 @@ which produces the above QC report.  The output is colour-coded using a traffic 
 We can also print summary statistics for the specified columns, and list any cells that contain suspected outlier values:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O print stats data.csv 
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 print stats data.csv 
 Column stats:
     column min     mean    max     q1      median  q3      std 
     1      -12     -11     -10     -11     -11     -10     0.7 
@@ -229,6 +229,18 @@ Column stats:
 Column outliers (1.5 * IQR):
     column,row value   
     4,9        2.3e+02 
+```
+
+Similarly to when plotting, we can turn off the outliers table (`-O`).  This is useful if there are so many outliers that the column stats table scrolls off the top of the screen:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O print stats data.csv 
+Column stats:
+    column min     mean    max     q1      median  q3      std 
+    1      -12     -11     -10     -11     -11     -10     0.7 
+    2      40      59      78      49      56      68      12  
+    3      9.5e+02 9.7e+02 1e+03   9.7e+02 9.7e+02 9.9e+02 15  
+    4      17      74      2.3e+02 21      24      76      90  
 ```
 
 ### A note on encodings
