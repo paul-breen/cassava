@@ -505,3 +505,130 @@ def test_read_non_utf8_encoded_file_with_compatible_encoding():
     with cassava.Cassava(path=in_file, encoding='Windows-1252', conf=conf) as f:
         f.read()
 
+def test_comment_character_overrides_defaults():
+    in_file = base + '/data/xcsv.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'comment': '#',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == 4
+        assert f.conf['first_data_row'] == 5
+        assert f.header_row == ['id','count']
+        assert f.rows[f.conf['first_data_row']] == ['0','70']
+
+def test_comment_character_overrides_opts():
+    in_file = base + '/data/xcsv.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'comment': '#',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == 4
+        assert f.conf['first_data_row'] == 5
+        assert f.header_row == ['id','count']
+        assert f.rows[f.conf['first_data_row']] == ['0','70']
+
+def test_comment_character_not_present_does_not_override_defaults():
+    in_file = base + '/data/dt-valid.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'comment': '#',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == cassava.Cassava.DEFAULTS['header_row']
+        assert f.conf['first_data_row'] == cassava.Cassava.DEFAULTS['first_data_row']
+        assert f.header_row == []
+        assert f.rows[f.conf['first_data_row']] == ['Datetime','Temperature']
+
+def test_comment_character_not_present_does_not_override_opts():
+    in_file = base + '/data/dt-valid.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 2,
+        'first_data_row': 3,
+        'comment': '#',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == 2
+        assert f.conf['first_data_row'] == 3
+        assert f.header_row == ['1999-12-31T23:51:00','-1']
+        assert f.rows[f.conf['first_data_row']] == ['1999-12-31T23:52:00','-2']
+
+def test_comment_character_different_does_not_override_defaults():
+    in_file = base + '/data/xcsv.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'comment': '/',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == cassava.Cassava.DEFAULTS['header_row']
+        assert f.conf['first_data_row'] == cassava.Cassava.DEFAULTS['first_data_row']
+        assert f.header_row == []
+        assert f.rows[f.conf['first_data_row']] == ['# id: 1']
+
+def test_comment_character_different_does_not_override_opts():
+    in_file = base + '/data/xcsv.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'comment': '/',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == 0
+        assert f.conf['first_data_row'] == 1
+        assert f.header_row == ['# id: 1']
+        assert f.rows[f.conf['first_data_row']] == ['# title: The title']
+
+def test_comment_character_not_start_of_line_fails():
+    in_file = base + '/data/xcsv.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'comment': ':',
+        'xcol': 0,
+        'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        assert f.conf['header_row'] == 0
+        assert f.conf['first_data_row'] == 1
+        assert f.header_row == ['# id: 1']
+        assert f.rows[f.conf['first_data_row']] == ['# title: The title']
+

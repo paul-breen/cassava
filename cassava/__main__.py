@@ -85,6 +85,7 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     parser.add_argument('-e', '--encoding', help='character encoding of the input file', dest='encoding', type=str, default=ENCODING)
     parser.add_argument('-H', '--header-row', help='row containing the header', dest='header_row', type=int, default=Cassava.DEFAULTS['header_row'])
     parser.add_argument('-i', '--first-data-row', help='first row containing data to plot', dest='first_data_row', default=Cassava.DEFAULTS['first_data_row'], type=int)
+    parser.add_argument('-c', '--comment', help='comment character that introduces a file header section that is to be skipped, then set header row and first data row to follow this', dest='comment', type=str, default=Cassava.DEFAULTS['comment'])
     parser.add_argument('-C', '--common-header-row', help='shorthand for -H 0 -i 1, as this is such a commonplace configuration', action='store_true')
     parser.add_argument('-x', '--x-column', help='column containing values for the x-axis', dest='xcol', default=Cassava.DEFAULTS['xcol'], type=int)
     parser.add_argument('-y', '--y-column', help='column containing values for the y-axis (specify multiple columns separated by commas and/or as ranges to plot multiple curves on y-axis)', dest='ycol', default=str(Cassava.DEFAULTS['ycol'][0]), type=str)

@@ -33,6 +33,7 @@ class Cassava(object):
     DEFAULTS = {
         'header_row': None,
         'first_data_row': 0,
+        'comment': None,
         'xcol': None,
         'ycol': [0],
         'x_as_datetime': False,
@@ -196,9 +197,16 @@ class Cassava(object):
         If an index has been set in the header_row config item, then after
         parsing the rows, the header row is stored in self.header_row
 
+        If a comment character has been set in the comment config item, then
+        any commented header section is first read and processed, and used to
+        automatically set the header_row and first_data_row config items
+
         :returns: The rows
         :rtype: list
         """
+
+        if self.conf['comment'] is not None:
+            self.process_commented_header()
 
         reader = csv.reader(self.fp, delimiter=self.conf['delimiter'], skipinitialspace=self.conf['skip_initial_space'])
 
@@ -212,6 +220,36 @@ class Cassava(object):
         self.store_header()
 
         return self.rows
+
+    def process_commented_header(self):
+        """
+        Read and process any commented file header section from the input file
+
+        Any line beginning with the configured comment character is read and
+        processed.  Processing stops on the first non-commented line.  The
+        file is rewound and this processing is then used to set the following:
+
+        self.conf['header_row']        # First non-commented line
+        self.conf['first_data_row']    # Second non-commented line
+
+        :returns: Flag indicating whether a commented header is present or not
+        :rtype: bool
+        """
+
+        has_commented_header = False
+
+        for i, line in enumerate(self.fp):
+            if line.startswith(self.conf['comment']):
+                has_commented_header = True
+            else:
+                if has_commented_header:
+                    self.conf['header_row'] = i
+                    self.conf['first_data_row'] = i + 1
+
+                self.fp.seek(0, 0)
+                break
+
+        return has_commented_header
 
     def store_header(self):
         """

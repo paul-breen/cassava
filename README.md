@@ -40,6 +40,10 @@ Note that the options are global to all modes (commands and subcommands), even w
                         row containing the header
   -i FIRST_DATA_ROW, --first-data-row FIRST_DATA_ROW
                         first row containing data to plot
+  -c COMMENT, --comment COMMENT
+                        comment character that introduces a file header
+                        section that is to be skipped, then set header row and
+                        first data row to follow this
   -C, --common-header-row
                         shorthand for -H 0 -i 1, as this is such a commonplace
                         configuration
@@ -243,6 +247,42 @@ Column stats:
     4      17      74      2.3e+02 21      24      76      90  
 ```
 
+As noted above, being able to separately specify the header row and the first data row gives us flexibilty when given a CSV file that may have a complex structured header section.  A fairly common use case though, is where the CSV file has an extended file header section (often not comma-separated) that is introduced by some form of comment character.  As a convenience, we can tell cassava to skip over this file header section and then automatically set the column header row to be the first row following this file header section, and the first data row to be the next row.  We do this by specifying a comment character (`-c`).
+
+[XCSV](https://github.com/paul-breen/xcsv) is a file format that contains an extended file header section, introduced by the `#` character and containing key/value pairs, and followed by a CSV table with a column header row and data rows.
+
+Given the following XCSV file:
+
+```
+# id: 1
+# title: The title
+# summary: This dataset...
+# authors: A B, C D
+id,count
+0,70
+1,33
+2,3
+3,22
+4,1
+5,34
+6,80
+7,38
+8,47
+9,89
+```
+
+we can set the comment character (`-c`) and cassava will automatically set `conf['header_row'] = 4` and `conf['first_data_row'] = 5` for us.  Note that here, we need to quote the comment character as it is also the shell's comment character.
+
+```bash
+$ python -m cassava -c '#' print qc xcsv.csv
+Column counts:
+    first row 5: ncols = 2
+Row counts:
+    total rows = 15, data rows = 10
+Empty columns:
+Empty rows:
+```
+
 ### A note on encodings
 
 The default character set encoding used to read an input file is UTF-8.  For input files that contain only numeric data, with the possible addition of datetime strings, this will normally suffice.  However, if the data include text labels with characters outside of the ASCII range, then it's possible that the file was encoded using a different encoding.  In such cases, the file can either be converted to UTF-8 (by using `iconv`, for example), or by specifying the file's encoding on the command line with the `--encoding` option.  The input to this option is the encoding name (e.g., UTF-8, ISO-8859-15 etc.).
@@ -294,6 +334,7 @@ As can be seen above, cassava requires a fully-specified configuration `dict`, s
     DEFAULTS = {
         'header_row': None,
         'first_data_row': 0,
+        'comment': None,
         'xcol': None,
         'ycol': [0],
         'x_as_datetime': False,
@@ -308,6 +349,7 @@ As can be seen above, cassava requires a fully-specified configuration `dict`, s
 
 * header_row: Integer row index of the input file's header
 * first_data_row: Integer row index of the input file's first data row
+* comment: Character that introduces a file header section to be skipped
 * xcol: Integer column index from the input file for the plot x-axis
 * ycol: Integer column index `list` from the input file for the plot y-axis
 * x_as_datetime: Consider the x-axis data as datetime strings
@@ -362,7 +404,7 @@ The `Cassava` object has the following instance variables:
 * conf: The configuration for the input file (`dict`)
 * fp: The file pointer for the input file (`file` object)
 * header_row: The (optional) header row, parsed from the input data (`list`)
-* rows: The data rows parsed from the input data (`list` of `list`s)
+* rows: All rows parsed from the input data (`list` of `list`s)
 
 ### Reading input data
 
@@ -384,7 +426,7 @@ c.print_qc()
 c.close()
 ```
 
-As noted in the previous section, the `header_row` and `rows` attributes hold the header row and data rows parsed from the input data.  Hence you could also directly set `rows` (and optionally `header_row`), rather than reading them from a file using the `read` method, and still be able to make use of the methods that cassava provides.
+As noted in the previous section, the `header_row` and `rows` attributes hold the header row and all rows parsed from the input data.  Hence you could also directly set `rows` (and optionally `header_row`), rather than reading them from a file using the `read` method, and still be able to make use of the methods that cassava provides.
 
 #### Reading input data with different delimiters
 
