@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cassava-csv"
-version = "0.3.0"
+version = "0.4.0"
 description = "Cassava is a package for reading, plotting and quality-checking CSV files."
 authors = ["Paul Breen <pbree@bas.ac.uk>"]
 readme = "README.md"
