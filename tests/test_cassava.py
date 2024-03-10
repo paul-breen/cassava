@@ -632,3 +632,37 @@ def test_comment_character_not_start_of_line_fails():
         assert f.header_row == ['# id: 1']
         assert f.rows[f.conf['first_data_row']] == ['# title: The title']
 
+@pytest.mark.parametrize(['path','opts','expected'], [
+('/data/dt-valid.csv', {'comment': '#'}, {'header_row': None, 'first_data_row': 0, 'has_commented_header': False}),
+('/data/xcsv.csv', {'comment': '#'}, {'header_row': 4, 'first_data_row': 5, 'has_commented_header': True}),
+('/data/encoded_utf-8_xcsv_bom.csv', {'comment': '#'}, {'header_row': 2, 'first_data_row': 3, 'has_commented_header': True})
+])
+def test_process_commented_header(path, opts, expected):
+    in_file = base + path
+    conf = cassava.Cassava.DEFAULTS.copy()
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        has_commented_header = f.process_commented_header()
+        assert has_commented_header == expected['has_commented_header']
+        assert f.conf['header_row'] == expected['header_row']
+        assert f.conf['first_data_row'] == expected['first_data_row']
+
+@pytest.mark.parametrize(['path','opts','expected'], [
+('/data/dt-valid.csv', {'header_row': 0, 'first_data_row': 1}, {'x': 0, 'y': 0, 'data': {'has_bom': False}, 'status': cassava.CassavaStatus.ok}),
+('/data/encoded_utf-8.csv', {'header_row': 0, 'first_data_row': 1}, {'x': 0, 'y': 0, 'data': {'has_bom': False}, 'status': cassava.CassavaStatus.ok}),
+('/data/encoded_utf-8_bom.csv', {'header_row': 0, 'first_data_row': 1}, {'x': 0, 'y': 0, 'data': {'has_bom': True}, 'status': cassava.CassavaStatus.warn}),
+('/data/xcsv.csv', {'comment': '#'}, {'x': 0, 'y': 0, 'data': {'has_bom': False}, 'status': cassava.CassavaStatus.ok}),
+('/data/encoded_utf-8_xcsv.csv', {'comment': '#'}, {'x': 0, 'y': 0, 'data': {'has_bom': False}, 'status': cassava.CassavaStatus.ok}),
+('/data/encoded_utf-8_xcsv_bom.csv', {'comment': '#'}, {'x': 0, 'y': 0, 'data': {'has_bom': True}, 'status': cassava.CassavaStatus.warn})
+])
+def test_check_bom(path, opts, expected):
+    in_file = base + path
+    conf = cassava.Cassava.DEFAULTS.copy()
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        msg = f.check_bom()
+        assert msg == expected
+

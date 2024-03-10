@@ -220,6 +220,12 @@ Empty rows:
 
 which produces the above QC report.  The output is colour-coded using a traffic light system, thereby highlighting quality issues.  For the `Column counts` section, only those rows which have differing column counts to the first data row are listed, so ideally in good data, you would only see the column count of the first data row.  Running the above in verbose mode (`-v`) would list all column counts, irrespective of whether they agree with the first data row or not.
 
+If the encoding of the file is UTF-8 and it begins with a Byte Order Mark (BOM), then a warning is emitted at the top of the QC report:
+
+```bash
+The effective encoding is utf-8 and the input begins with an unneccessary Byte Order Mark (BOM). This BOM is present in cell (0,0) of the stored input. If this is undesirable, either remove the BOM or specify the encoding as utf-8-sig (see the --encoding option)
+```
+
 We can also print summary statistics for the specified columns, and list any cells that contain suspected outlier values:
 
 ```bash
@@ -283,9 +289,13 @@ Empty columns:
 Empty rows:
 ```
 
+As noted earlier, if the file begins with an unnecessary BOM, a warning is emitted at the top of the QC report.  However, when skipping a file header section, cassava silently ignores the presence of any BOM, otherwise it would fail to match the comment character on the first line of the file and so fail to process the file header section correctly.
+
 ### A note on encodings
 
 The default character set encoding used to read an input file is UTF-8.  For input files that contain only numeric data, with the possible addition of datetime strings, this will normally suffice.  However, if the data include text labels with characters outside of the ASCII range, then it's possible that the file was encoded using a different encoding.  In such cases, the file can either be converted to UTF-8 (by using `iconv`, for example), or by specifying the file's encoding on the command line with the `--encoding` option.  The input to this option is the encoding name (e.g., UTF-8, ISO-8859-15 etc.).
+
+If the encoding of a file is UTF-8 and it begins with a BOM, then a warning is emitted when printing a QC report.
 
 As an example, say a CSV file was exported from MS Excel, and the data contained some common Scandinavian characters.  When exporting this, it's possible that Excel will use the Windows-1252 encoding for the data.  This will cause `cassava` to fail to read the data in, as it's expecting UTF-8 encoded input.  Running `cassava` without specifying the encoding will result in an exception similar to the following:
 
@@ -626,6 +636,7 @@ Subsequent rows will have `is_first_row = False`, and `status = CassavaStatus.ok
 
 The following describe the `message['data'] dict` for each method:
 
+* check_bom: {'has_bom': Boolean}
 * check_column_counts: {'is_first_row': Boolean, 'ncols': Integer column count}
 * check_empty_columns: {'is_empty': Boolean}
 * check_empty_rows: {'is_empty': Boolean}

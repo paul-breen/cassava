@@ -2,6 +2,8 @@ __version__ = '0.3.0'
 
 import sys
 import csv
+import codecs
+import encodings
 import datetime
 from enum import Enum
 
@@ -11,6 +13,7 @@ from blessed import Terminal
 
 MODE = 'r'
 ENCODING = 'utf-8'
+UTF_8_BOM = codecs.BOM_UTF8.decode('utf-8')
 INDENT = 4
 _term = Terminal()
 
@@ -239,6 +242,11 @@ class Cassava(object):
         has_commented_header = False
 
         for i, line in enumerate(self.fp):
+            # Here, we silently skip over any unnecessary BOM.  The presence
+            # of any unnecessary BOM will be highlighted in QC checks
+            if i == 0 and line.startswith(UTF_8_BOM):
+                line = line[len(UTF_8_BOM):]
+
             if line.startswith(self.conf['comment']):
                 has_commented_header = True
             else:
@@ -653,6 +661,31 @@ class Cassava(object):
 
         return fig, axs
 
+    def check_bom(self):
+        """
+        Check if the input file begins with an unnecessary Byte Order Mark (BOM)
+
+        If the encoding is UTF-8, the first cell is inspected for the
+        presence of a BOM
+
+        :returns: A message dict
+        :rtype: dict
+        """
+
+        x,y = 0,0
+        msg = {'x': x, 'y': y, 'data': {'has_bom': False}, 'status': CassavaStatus.ok}
+
+        if encodings.normalize_encoding(self.fp.encoding) == encodings.normalize_encoding('utf-8'):
+            try:
+                cell = self.rows[y][x]
+            except IndexError:
+                cell = ''
+
+            if cell.startswith(UTF_8_BOM):
+                msg = {'x': x, 'y': y, 'data': {'has_bom': True}, 'status': CassavaStatus.warn}
+
+        return msg
+
     def check_column_counts(self):
         """
         Check that the number of columns is consistent for all rows
@@ -765,6 +798,21 @@ class Cassava(object):
                 msg = {'x': ycol, 'y': y + y0, 'data': {'value': Y[y]}, 'status': CassavaStatus.error}
                 yield msg
 
+    def print_bom(self):
+        """
+        Print whether the input file begins with an unnecessary BOM
+        """
+
+        msg = self.check_bom()
+
+        if msg['data']['has_bom']:
+            text = f"The effective encoding is utf-8 and the input begins with an unneccessary Byte Order Mark (BOM). This BOM is present in cell ({msg['x']},{msg['y']}) of the stored input. If this is undesirable, either remove the BOM or specify the encoding as utf-8-sig (see the --encoding option)"
+            self.print_status(text, msg['status'])
+        else:
+            if(self.conf['verbose']):
+                text = 'No unnecessary Byte Order Mark (BOM) found'
+                self.print_status(text, msg['status'])
+
     def print_column_counts(self):
         """
         Print whether the number of columns is consistent for all rows
@@ -860,6 +908,7 @@ class Cassava(object):
         Print QC checks
         """
 
+        self.print_bom()
         self.print_column_counts()
         self.print_row_counts()
         self.print_empty_columns()
