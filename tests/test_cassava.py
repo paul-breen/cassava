@@ -666,3 +666,76 @@ def test_check_bom(path, opts, expected):
         msg = f.check_bom()
         assert msg == expected
 
+# Be careful with expected output - the stats lines have some trailing space
+@pytest.mark.parametrize(['fmt','expected'], [
+('.2g',
+"""Column stats:
+    column min    mean     max q1     median   q3   std     
+    1      -1e+04 -2.3e+03 0   -1e+03 -5.5e+02 -5.2 3.9e+03 
+Column outliers (1.5 * IQR):
+    column,row value  
+    1,3        -1e+04 
+    1,8        -1e+04 
+"""),
+('.4g',
+"""Column stats:
+    column min   mean  max q1     median q3    std  
+    1      -9999 -2311 0   -999.7 -549   -5.25 3867 
+Column outliers (1.5 * IQR):
+    column,row value 
+    1,3        -9999 
+    1,8        -9999 
+"""),
+('.6g',
+"""Column stats:
+    column min   mean    max q1       median q3    std     
+    1      -9999 -2310.9 0   -999.743 -549   -5.25 3867.34 
+Column outliers (1.5 * IQR):
+    column,row value 
+    1,3        -9999 
+    1,8        -9999 
+"""),
+('.8g',
+"""Column stats:
+    column min   mean      max q1        median q3    std      
+    1      -9999 -2310.899 0   -999.7425 -549   -5.25 3867.342 
+Column outliers (1.5 * IQR):
+    column,row value 
+    1,3        -9999 
+    1,8        -9999 
+"""),
+('.2f',
+"""Column stats:
+    column min      mean     max  q1      median  q3    std     
+    1      -9999.00 -2310.90 0.00 -999.74 -549.00 -5.25 3867.34 
+Column outliers (1.5 * IQR):
+    column,row value    
+    1,3        -9999.00 
+    1,8        -9999.00 
+"""),
+('.4f',
+"""Column stats:
+    column min        mean       max    q1        median    q3      std       
+    1      -9999.0000 -2310.8990 0.0000 -999.7425 -549.0000 -5.2500 3867.3420 
+Column outliers (1.5 * IQR):
+    column,row value      
+    1,3        -9999.0000 
+    1,8        -9999.0000 
+"""),
+])
+def test_print_stats_float_format_specifier(capsys, fmt, expected):
+    in_file = base + '/data/missing-values.csv'
+    conf = cassava.Cassava.DEFAULTS.copy()
+    opts = {
+        'header_row': 0,
+        'first_data_row': 1,
+        'xcol': 0, 'ycol': [1]
+    }
+    conf.update(opts)
+
+    with cassava.Cassava(path=in_file, conf=conf) as f:
+        f.read()
+        f.print_stats(fmt=fmt)
+        captured = capsys.readouterr()
+        assert captured.out == expected
+

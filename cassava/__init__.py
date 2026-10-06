@@ -41,6 +41,7 @@ class Cassava(object):
         'ycol': [0],
         'x_as_datetime': False,
         'datetime_format': '%Y-%m-%dT%H:%M:%S',
+        'float_format': '.2g',
         'missing_value': None,
         'delimiter': ',',
         'skip_initial_space': False,
@@ -882,26 +883,31 @@ class Cassava(object):
                 if(self.conf['verbose']):
                     self.print_status(text, msg['status'], indent=INDENT)
 
-    def print_column_stats(self):
+    def print_column_stats(self, fmt='.2g'):
         """
         Print column statistics for the configured columns
+
+        :param fmt: A format specifier to apply to each data value
+        :type fmt: str
         """
 
         print('Column stats:')
         table = [msg for msg in self.compute_column_stats()]
-        self.print_msg_table(table, indent=INDENT)
+        self.print_msg_table(table, indent=INDENT, fmt=fmt)
 
-    def print_column_outliers_iqr(self, k=1.5):
+    def print_column_outliers_iqr(self, k=1.5, fmt='.2g'):
         """
         Print any outliers for the configured columns
 
         :param k: The factor to multiply the IQR by
         :type k: float
+        :param fmt: A format specifier to apply to each data value
+        :type fmt: str
         """
 
         print(f'Column outliers ({k} * IQR):')
         table = [msg for msg in self.check_column_outliers_iqr(k=k)]
-        self.print_msg_table(table, indent=INDENT)
+        self.print_msg_table(table, indent=INDENT, fmt=fmt)
 
     def print_qc(self):
         """
@@ -914,7 +920,7 @@ class Cassava(object):
         self.print_empty_columns()
         self.print_empty_rows()
 
-    def print_stats(self, k=1.5, showfliers=True):
+    def print_stats(self, k=1.5, showfliers=True, fmt='.2g'):
         """
         Print stats
 
@@ -922,10 +928,12 @@ class Cassava(object):
         :type k: float
         :param showfliers: Show the outliers table
         :type showfliers: bool
+        :param fmt: A format specifier to apply to each data value
+        :type fmt: str
         """
 
-        self.print_column_stats()
+        self.print_column_stats(fmt=fmt)
 
         if showfliers:
-            self.print_column_outliers_iqr(k=k)
+            self.print_column_outliers_iqr(k=k, fmt=fmt)
 
