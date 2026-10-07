@@ -56,6 +56,8 @@ Note that the options are global to all modes (commands and subcommands), even w
   -d, --x-as-datetime   treat the x-axis values as datetimes
   -f DATETIME_FORMAT, --datetime-format DATETIME_FORMAT
                         datetime format specification
+  -n FLOAT_FORMAT, --float-format FLOAT_FORMAT
+                        output float format specification when printing stats
   -m MISSING_VALUE, --missing-value MISSING_VALUE
                         value to be treated as missing data
   -l DELIMITER, --delimiter DELIMITER
@@ -72,6 +74,9 @@ Note that the options are global to all modes (commands and subcommands), even w
                         options for the plot, specified as a simple JSON
                         object
   -S, --scatter-plot    set plot options (see -P) to produce a scatter plot
+  -o OUT_FILE, --out-file OUT_FILE
+                        rather than show the plot, save it to the given output
+                        plot file
   -v, --verbose         emit verbose messages
   -V, --version         show program's version number and exit
 ```
@@ -172,17 +177,25 @@ Another case where you may find large values are obscuring the detail, is where 
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 plot qc data.csv
 ```
 
-If we have isolated points that are separated by NaN values (either direct NaN values or converted missing values), then the default plot type (a line plot) may not show these points, as matplotlib cannot draw a line segment between them.  In such a case, we can ask cassava to produce a scatter plot (`-S`) instead of a line plot:
+If we have isolated points that are separated by NaN values (either direct NaN values or converted missing values), then the default plot type (a line plot) may not show these points, as `matplotlib` cannot draw a line segment between them.  In such a case, we can ask cassava to produce a scatter plot (`-S`) instead of a line plot:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -S plot qc data.csv
 ```
 
-This scatter-plot option is actually a convenience option for the more general purpose plot-options option (`-P`), which takes a valid set of matplotlib plot options as a simple JSON object, and then converts it into a Python `dict`.  Note that as it's a JSON object, you must use double-quotes for the keys and any string values.  For example, the scatter-plot option above can equivalently be specified as:
+This scatter-plot option is actually a convenience option for the more general purpose plot-options option (`-P`), which takes a valid set of `matplotlib` plot options as a simple JSON object, and then converts it into a Python `dict`.  Note that as it's a JSON object, you must use double-quotes for the keys and any string values.  For example, the scatter-plot option above can equivalently be specified as:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' plot qc data.csv
 ```
+
+By default, cassava will show the plot in an interactive plot window.  If we want to save the plot, we can either click the save button and provide a filename from within the interactive plot window, or we can call cassava with the output file (`-o`) option to save the plot to the given file instead of showing it in the interactive plot window.  This is especially useful when batch plotting many CSV files:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' -o plot.png plot qc data.csv
+```
+
+Cassava can save the plot in any of the formats supported by `matplotlib`, by providing an output file name with a suitable file suffix.  For example, to output as an SVG, call as `-o plot.svg`.
 
 For any of the working command lines above, we could replace the `qc` subcommand with the `stats` subcommand, to get summary statistics plots for the specified y-columns.  Let's do that for the 2x2 grid command line.  The first thing to note, is that the `-N 2` option is not required for stats plots.  However, as noted above, it doesn't hurt to leave it there and thus allows for rapid tweak/repeat cycles:
 
@@ -251,6 +264,18 @@ Column stats:
     2      40      59      78      49      56      68      12  
     3      9.5e+02 9.7e+02 1e+03   9.7e+02 9.7e+02 9.9e+02 15  
     4      17      74      2.3e+02 21      24      76      90  
+```
+
+In the stats and outliers tables, the default format specifier for the values is `.2g`.  This provides compact tables, but in some cases (as above) this can obscure some of the finer detail.  To reveal this finer detail, we can call cassava with a custom number format specifier (`-n`), for example:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O -n .4f print stats data.csv
+Column stats:
+    column min      mean     max      q1       median   q3       std     
+    1      -12.0000 -10.9000 -10.0000 -11.0000 -11.0000 -10.2500 0.7000  
+    2      40.0000  58.6000  78.0000  48.7500  56.5000  68.0000  12.3142 
+    3      952.0000 974.7778 995.0000 966.0000 971.0000 990.0000 14.9872 
+    4      17.0000  73.5000  230.0000 20.7500  23.5000  76.2500  90.4005 
 ```
 
 As noted above, being able to separately specify the header row and the first data row gives us flexibilty when given a CSV file that may have a complex structured header section.  A fairly common use case though, is where the CSV file has an extended file header section (often not comma-separated) that is introduced by some form of comment character.  As a convenience, we can tell cassava to skip over this file header section and then automatically set the column header row to be the first row following this file header section, and the first data row to be the next row.  We do this by specifying a comment character (`-c`).
