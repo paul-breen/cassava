@@ -7,7 +7,7 @@ readme = "README.md"
 license = "Apache-2.0"
 repository = "https://github.com/paul-breen/cassava"
 homepage = "https://github.com/paul-breen/cassava"
-documentation = "https://raw.githubusercontent.com/paul-breen/cassava/main/README.md"
+documentation = "https://github.com/paul-breen/cassava/blob/main/README.md"
 
 # This is required because the cassava name is taken on PyPI, hence "name"
 # above is different to the directory/module name
@@ -23,7 +23,7 @@ python = "^3.10"
 matplotlib = "^3.4.3"
 blessed = "^1.18.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^9.0"
 pytest-mock = "^3.0.0"
 
