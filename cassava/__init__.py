@@ -654,7 +654,7 @@ class Cassava(object):
                 self.axs[i,1].set_title(f'{k} * IQR')
 
             # Box plot
-            self.axs[i,2].boxplot(Y, labels=[label], whis=k, showfliers=showfliers)
+            self.axs[i,2].boxplot(Y, tick_labels=[label], whis=k, showfliers=showfliers)
 
             if i == 0:
                 self.axs[i,2].set_title('Boxplot')
