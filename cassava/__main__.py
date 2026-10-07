@@ -102,6 +102,7 @@ python3 -m cassava -H 0 -i 1 -x 0 -d -f '%d/%m/%Y %H:%M:%S' -y 1,2,3 print qc in
     parser.add_argument('-O', '--hide-outliers', help="don't show outliers on stats plots", dest='showfliers', action='store_false', default=True)
     parser.add_argument('-P', '--plot-options', help="options for the plot, specified as a simple JSON object", dest='plot_opts', default={}, type=json.loads)
     parser.add_argument('-S', '--scatter-plot', help="set plot options (see -P) to produce a scatter plot", dest='plot_opts', action='store_const', const={'marker': '.', 'ls': ''})
+    parser.add_argument('-o', '--out-file', help='rather than show the plot, save it to the given output plot file')
 
     parser.add_argument('-v', '--verbose', help='emit verbose messages', dest='verbose', action='store_true', default=Cassava.DEFAULTS['verbose'])
     parser.add_argument('-V', '--version', action='version', version=f"%(prog)s {__version__}")
@@ -166,6 +167,11 @@ def main():
                 f.plot_stats(k=args.k, showfliers=args.showfliers)
             else:
                 raise ValueError('Unsupported subcommand')
+
+            if args.out_file:
+                f.savefig(args.out_file)
+            else:
+                f.show()
         elif command == 'print':
             if subcommand == 'qc':
                 f.print_qc()

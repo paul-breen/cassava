@@ -104,3 +104,22 @@ def test_main_print_qc():
     args = m.parse_cmdln()
     m.main()
 
+def test_main_plot_show_or_save(mocker):
+    in_file = base + '/data/dt-valid.csv'
+    dummy_out_file = 'dummy.png'
+
+    mocked_show = mocker.patch('cassava.Cassava.show')
+    mocked_savefig = mocker.patch('cassava.Cassava.savefig')
+
+    # No output file specified so we show the plot
+    sys.argv = ['main', '-H', '0', '-i', '1', '-y', '1', 'plot', 'stats', in_file]
+    args = m.parse_cmdln()
+    m.main()
+    mocked_show.assert_called_once()
+
+    # Output file specified so we save the plot
+    sys.argv = ['main', '-H', '0', '-i', '1', '-y', '1', '-o', dummy_out_file, 'plot', 'stats', in_file]
+    args = m.parse_cmdln()
+    m.main()
+    mocked_savefig.assert_called_once_with(dummy_out_file)
+

@@ -70,6 +70,8 @@ class Cassava(object):
         self.fp = None
         self.header_row = []
         self.rows = []
+        self.fig = None
+        self.axs = []
         sys.excepthook = self._exception_handler
 
     def _exception_handler(self, etype, e, tb, verbose_hook=sys.excepthook):
@@ -555,7 +557,7 @@ class Cassava(object):
 
         axs[0,0].legend()
 
-    def plot(self, show=True, layout=(1,1), opts={}):
+    def plot(self, show=False, layout=(1,1), opts={}):
         """
         Plot the data
 
@@ -576,21 +578,21 @@ class Cassava(object):
         # Determine if we've been asked to plot a multi-plot grid
         multi = layout[0] * layout[1] > 1
 
-        fig, axs = plt.subplots(*layout, squeeze=False)
+        self.fig, self.axs = plt.subplots(*layout, squeeze=False)
         x = self.get_x_axis_data()
         labels = self.get_column_labels_from_header(self.conf['ycol'])
 
         if multi:
-            self._plot_multi(fig, axs, x, labels, layout, opts)
+            self._plot_multi(self.fig, self.axs, x, labels, layout, opts)
         else:
-            self._plot_single(fig, axs, x, labels, opts)
+            self._plot_single(self.fig, self.axs, x, labels, opts)
 
         if show:
             plt.show()
 
-        return fig, axs
+        return self.fig, self.axs
 
-    def plot_stats(self, show=True, bins='auto', k=1.5, showfliers=True):
+    def plot_stats(self, show=False, bins='auto', k=1.5, showfliers=True):
         """
         Plot stats of the data
 
@@ -606,7 +608,7 @@ class Cassava(object):
         :rtype: tuple
         """
 
-        fig, axs = plt.subplots(len(self.conf['ycol']), 3, squeeze=False)
+        self.fig, self.axs = plt.subplots(len(self.conf['ycol']), 3, squeeze=False)
         x = self.get_x_axis_data()
         labels = self.get_column_labels_from_header(self.conf['ycol'])
 
@@ -632,35 +634,53 @@ class Cassava(object):
                 r = (stats['q1'] - k * iqr, stats['q3'] + k * iqr)
 
             # Density plot
-            axs[i,0].hist(y, bins=bins, range=r, density=True, label=label)
-            axs[i,0].legend()
+            self.axs[i,0].hist(y, bins=bins, range=r, density=True, label=label)
+            self.axs[i,0].legend()
 
             if i == 0:
-                axs[i,0].set_title('Density')
+                self.axs[i,0].set_title('Density')
 
             # Line plot and k * IQR interval to show outliers
-            axs[i,1].plot(x, y, label=label)
-            axs[i,1].axhline(y=stats['q3'] + k * iqr, c='red', ls='--', lw=0.5)
-            axs[i,1].axhline(y=stats['q1'] - k * iqr, c='red', ls='--', lw=0.5)
-            axs[i,1].legend()
+            self.axs[i,1].plot(x, y, label=label)
+            self.axs[i,1].axhline(y=stats['q3'] + k * iqr, c='red', ls='--', lw=0.5)
+            self.axs[i,1].axhline(y=stats['q1'] - k * iqr, c='red', ls='--', lw=0.5)
+            self.axs[i,1].legend()
 
             # Optionally chop-off outliers
             if not showfliers:
-                axs[i,1].set_ylim(*r)
+                self.axs[i,1].set_ylim(*r)
 
             if i == 0:
-                axs[i,1].set_title(f'{k} * IQR')
+                self.axs[i,1].set_title(f'{k} * IQR')
 
             # Box plot
-            axs[i,2].boxplot(Y, labels=[label], whis=k, showfliers=showfliers)
+            self.axs[i,2].boxplot(Y, labels=[label], whis=k, showfliers=showfliers)
 
             if i == 0:
-                axs[i,2].set_title('Boxplot')
+                self.axs[i,2].set_title('Boxplot')
 
         if show:
             plt.show()
 
-        return fig, axs
+        return self.fig, self.axs
+
+    def show(self):
+        """
+        Display the figure
+
+        Convenience function so caller can avoid having to import matplotlib.
+        """
+
+        plt.show()
+
+    def savefig(self, filename):
+        """
+        Save the figure to the given output filename
+
+        Convenience function so caller can avoid having to import matplotlib.
+        """
+
+        self.fig.savefig(filename)
 
     def check_bom(self):
         """
