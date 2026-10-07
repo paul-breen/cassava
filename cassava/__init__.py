@@ -1,3 +1,15 @@
+"""
+Package for reading, plotting and quality-checking CSV files
+
+The package contains classes and workflows for:
+
+* Reading in arbitrary CSV (or similarly delimited) data.
+* Reporting common quality issues with the data.
+* Providing a quicklook plot to visually quality-assess the data.
+* Reporting summary statistics of the data.
+* Providing a quicklook plot of these summary statistics.
+"""
+
 __version__ = '0.4.0'
 
 import sys
