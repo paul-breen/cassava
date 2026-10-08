@@ -74,6 +74,8 @@ Note that the options are global to all modes (commands and subcommands), even w
                         options for the plot, specified as a simple JSON
                         object
   -S, --scatter-plot    set plot options (see -P) to produce a scatter plot
+  -z FIGSIZE FIGSIZE, --figsize FIGSIZE FIGSIZE
+                        size of the figure (width height)
   -o OUT_FILE, --out-file OUT_FILE
                         rather than show the plot, save it to the given output
                         plot file
@@ -189,13 +191,19 @@ This scatter-plot option is actually a convenience option for the more general p
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' plot qc data.csv
 ```
 
-By default, cassava will show the plot in an interactive plot window.  If we want to save the plot, we can either click the save button and provide a filename from within the interactive plot window, or we can call cassava with the output file (`-o`) option to save the plot to the given file instead of showing it in the interactive plot window.  This is especially useful when batch plotting many CSV files:
+By default, cassava will show the plot in an interactive plot window.  If we want to save the plot, we can either click the save button and provide a filename from within the interactive plot window, or we can call cassava with the output file option (`-o`) to save the plot to the given file instead of showing it in the interactive plot window.  This is especially useful when batch plotting many CSV files:
 
 ```bash
 $ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' -o plot.png plot qc data.csv
 ```
 
 Cassava can save the plot in any of the formats supported by `matplotlib`, by providing an output file name with a suitable file suffix.  For example, to output as an SVG, call as `-o plot.svg`.
+
+We can specify the size of the plot figure by providing width and height arguments, in inches, to the figure size option (`-z`).  This is particularly useful when saving the plot to a file rather than showing it:
+
+```bash
+$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' -o plot.png -z 18 12 plot qc data.csv
+```
 
 For any of the working command lines above, we could replace the `qc` subcommand with the `stats` subcommand, to get summary statistics plots for the specified y-columns.  Let's do that for the 2x2 grid command line.  The first thing to note, is that the `-N 2` option is not required for stats plots.  However, as noted above, it doesn't hurt to leave it there and thus allows for rapid tweak/repeat cycles:
 

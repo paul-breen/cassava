@@ -569,7 +569,7 @@ class Cassava(object):
 
         axs[0,0].legend()
 
-    def plot(self, show=False, layout=(1,1), opts={}):
+    def plot(self, show=False, figsize=None, layout=(1,1), opts={}):
         """
         Plot the data
 
@@ -579,6 +579,8 @@ class Cassava(object):
 
         :param show: Show the plot
         :type show: bool
+        :param figsize: The figure size tuple as (width, height)
+        :type figsize: tuple
         :param layout: The rows and columns for the subplots() call
         :type layout: tuple
         :param opts: Option kwargs to apply to all plots
@@ -590,7 +592,7 @@ class Cassava(object):
         # Determine if we've been asked to plot a multi-plot grid
         multi = layout[0] * layout[1] > 1
 
-        self.fig, self.axs = plt.subplots(*layout, squeeze=False)
+        self.fig, self.axs = plt.subplots(*layout, squeeze=False, figsize=figsize)
         x = self.get_x_axis_data()
         labels = self.get_column_labels_from_header(self.conf['ycol'])
 
@@ -604,12 +606,14 @@ class Cassava(object):
 
         return self.fig, self.axs
 
-    def plot_stats(self, show=False, bins='auto', k=1.5, showfliers=True):
+    def plot_stats(self, show=False, figsize=None, bins='auto', k=1.5, showfliers=True):
         """
         Plot stats of the data
 
         :param show: Show the plot
         :type show: bool
+        :param figsize: The figure size tuple as (width, height)
+        :type figsize: tuple
         :param bins: The bins for the density plot
         :type bins: The types supported by matplotlib.pyplot.hist
         :param k: The factor to multiply the IQR by
@@ -620,7 +624,7 @@ class Cassava(object):
         :rtype: tuple
         """
 
-        self.fig, self.axs = plt.subplots(len(self.conf['ycol']), 3, squeeze=False)
+        self.fig, self.axs = plt.subplots(len(self.conf['ycol']), 3, squeeze=False, figsize=figsize)
         x = self.get_x_axis_data()
         labels = self.get_column_labels_from_header(self.conf['ycol'])
 
