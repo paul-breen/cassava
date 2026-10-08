@@ -139,36 +139,36 @@ That works, and produces a line plot of the `Temperature` data.  This is a minim
 Let's provide a few more options for processing.  First we can address the notification that `matplotlib` emitted about no labels for the legend.  We can tell cassava that the first row (row 0 - all cassava coordinates have origin zero) is a header row (`-H 0`) and the first data row is the next row (`-i 1`).  Having these as two separate options gives us flexibility for cases where the CSV file may have a complex structured header section.  However, as this is such a commonplace header configuration, there is a shorthand option (`-C`), which is identical to `-H 0 -i 1`.  Furthermore, we note that this is a timeseries, so we can provide options to cassava so that it can treat it as such.  We specify the x-axis data as column 0 (`-x 0`), and tell cassava to treat the x-axis as a datetime column (`-d`).  The datetime format is ISO 8601, which is the cassava default, so we don't need to specify the datetime format.  Trying this also raises an exception:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -x 0 -d -y 1 plot qc data.csv
+$ python -m cassava -C -x 0 -d -y 1 plot qc data.csv
 Failed to convert column 0 at row 11 with strptime: ['', '', '', '', '', '', '', '']. Cause: time data '' does not match format '%Y-%m-%dT%H:%M:%S'
 ```
 
 This is valuable QC information, as it tells us exactly the row that failed to parse as a datetime (again, we can run in verbose mode to see the chained tracebacks).  Particularly useful if the file is large.  At this point we could address the issue directly, by editing the CSV file accordingly (in this example, by removing the empty trailing rows), or just run cassava without specifying the x-axis data (cassava then defaults to integer indices).  Let's do the latter:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1 plot qc data.csv
+$ python -m cassava -C -y 1 plot qc data.csv
 Failed to convert column 1 at row 11 with float: ['', '', '', '', '', '', '', '']. Cause: could not convert string to float: ''
 ```
 
 More valuable QC information!  The empty rows at the bottom of the file cause this exception.  Let's reintroduce the forgive option.  This allows us to get on with evaluating the data, but of course eventually, we will remove those empty rows.
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1 -F plot qc data.csv
+$ python -m cassava -C -y 1 -F plot qc data.csv
 ```
 
 This gives us a nice working command line.  Now let's plot all the numeric columns.  We can specify multiple columns for the y-axis by giving a comma-separated list and/or an inclusive range - the following are all equivalent:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F plot qc data.csv
-$ python -m cassava -H 0 -i 1 -y 1,2,3-4 -F plot qc data.csv
-$ python -m cassava -H 0 -i 1 -y 1,2-4 -F plot qc data.csv
-$ python -m cassava -H 0 -i 1 -y 1-4 -F plot qc data.csv
+$ python -m cassava -C -y 1,2,3,4 -F plot qc data.csv
+$ python -m cassava -C -y 1,2,3-4 -F plot qc data.csv
+$ python -m cassava -C -y 1,2-4 -F plot qc data.csv
+$ python -m cassava -C -y 1-4 -F plot qc data.csv
 ```
 
 This works, but as the `Sea_Level_Pressure` values are far greater than the other columns, it's not easy to pick out the detail.  We could drop the `Sea_Level_Pressure` column from the y-axis list (`-y 1,2,4`).  This is an improvement, but the outlier in `Wind_Speed` is now causing problems.  In cases where your data are of greatly differing scales, it's better to plot multiple curves on separate plots.  This can be achieved using the `-N NCOLS` option, which tells cassava to plot a grid of NCOLS-wide plots:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 plot qc data.csv
+$ python -m cassava -C -y 1-4 -F -N 2 plot qc data.csv
 ```
 
 This plots a 2x2 grid of plots, with each variable in its own plot, with a suitably-scaled y-axis.
@@ -176,25 +176,25 @@ This plots a 2x2 grid of plots, with each variable in its own plot, with a suita
 Another case where you may find large values are obscuring the detail, is where missing values in the data have been specified by a value that is outside of the data domain - for example `-999`.  In such a case, we can tell cassava to treat these values as missing data and replace them with NaN.  This will then mean that they are not shown when plotting the data:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 plot qc data.csv
+$ python -m cassava -C -y 1-4 -F -m -999 plot qc data.csv
 ```
 
 If we have isolated points that are separated by NaN values (either direct NaN values or converted missing values), then the default plot type (a line plot) may not show these points, as `matplotlib` cannot draw a line segment between them.  In such a case, we can ask cassava to produce a scatter plot (`-S`) instead of a line plot:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -S plot qc data.csv
+$ python -m cassava -C -y 1-4 -F -m -999 -S plot qc data.csv
 ```
 
 This scatter-plot option is actually a convenience option for the more general purpose plot-options option (`-P`), which takes a valid set of `matplotlib` plot options as a simple JSON object, and then converts it into a Python `dict`.  Note that as it's a JSON object, you must use double-quotes for the keys and any string values.  For example, the scatter-plot option above can equivalently be specified as:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -P '{"marker": ".", "ls": ""}' plot qc data.csv
+$ python -m cassava -C -y 1-4 -F -m -999 -P '{"marker": ".", "ls": ""}' plot qc data.csv
 ```
 
 By default, cassava will show the plot in an interactive plot window.  If we want to save the plot, we can either click the save button and provide a filename from within the interactive plot window, or we can call cassava with the output file option (`-o`) to save the plot to the given file instead of showing it in the interactive plot window.  This is especially useful when batch plotting many CSV files:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -S -o plot.png plot qc data.csv
+$ python -m cassava -C -y 1-4 -F -N 2 -o plot.png plot qc data.csv
 ```
 
 Cassava can save the plot in any of the formats supported by `matplotlib`, by providing an output file name with a suitable file suffix.  For example, to output as an SVG, call as `-o plot.svg`.
@@ -202,25 +202,25 @@ Cassava can save the plot in any of the formats supported by `matplotlib`, by pr
 We can specify the size of the plot figure by providing width and height arguments, in inches, to the figure size option (`-z`).  This is particularly useful when saving the plot to a file rather than showing it:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -m -999 -S -o plot.png -z 18 12 plot qc data.csv
+$ python -m cassava -C -y 1-4 -F -N 2 -o plot.png -z 18 12 plot qc data.csv
 ```
 
 For any of the working command lines above, we could replace the `qc` subcommand with the `stats` subcommand, to get summary statistics plots for the specified y-columns.  Let's do that for the 2x2 grid command line.  The first thing to note, is that the `-N 2` option is not required for stats plots.  However, as noted above, it doesn't hurt to leave it there and thus allows for rapid tweak/repeat cycles:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 plot stats data.csv
+$ python -m cassava -C -y 1-4 -F -N 2 plot stats data.csv
 ```
 
 This produces three plots for each specified y-column: a density plot of the distribution of the data, a line plot of the data including bounds to highlight potential outliers, and a boxplot of the data.  In this example, the outlier in the `Wind_Speed` is clearly identified.  If an outlier is so large that it dominates the remaining data, then we can instruct cassava to not show outliers (`-O`), thereby revealing the detail:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O plot stats data.csv
+$ python -m cassava -C -y 1-4 -F -N 2 -O plot stats data.csv
 ```
 
 Similarly, we can replace the `plot` command with the `print` command.  Let's do that (again, no need to remove extraneous options):
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O print qc data.csv 
+$ python -m cassava -C -y 1-4 -F -N 2 -O print qc data.csv
 Column counts:
     first row 1: ncols = 8
     row 14: ncols = 6
@@ -250,7 +250,7 @@ The effective encoding is utf-8 and the input begins with an unneccessary Byte O
 We can also print summary statistics for the specified columns, and list any cells that contain suspected outlier values:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 print stats data.csv 
+$ python -m cassava -C -y 1-4 -F -N 2 print stats data.csv
 Column stats:
     column min     mean    max     q1      median  q3      std 
     1      -12     -11     -10     -11     -11     -10     0.7 
@@ -265,7 +265,7 @@ Column outliers (1.5 * IQR):
 Similarly to when plotting, we can turn off the outliers table (`-O`).  This is useful if there are so many outliers that the column stats table scrolls off the top of the screen:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O print stats data.csv 
+$ python -m cassava -C -y 1-4 -F -N 2 -O print stats data.csv
 Column stats:
     column min     mean    max     q1      median  q3      std 
     1      -12     -11     -10     -11     -11     -10     0.7 
@@ -277,7 +277,7 @@ Column stats:
 In the stats and outliers tables, the default format specifier for the values is `.2g`.  This provides compact tables, but in some cases (as above) this can obscure some of the finer detail.  To reveal this finer detail, we can call cassava with a custom number format specifier (`-n`), for example:
 
 ```bash
-$ python -m cassava -H 0 -i 1 -y 1,2,3,4 -F -N 2 -O -n .4f print stats data.csv
+$ python -m cassava -C -y 1-4 -F -N 2 -O -n .4f print stats data.csv
 Column stats:
     column min      mean     max      q1       median   q3       std     
     1      -12.0000 -10.9000 -10.0000 -11.0000 -11.0000 -10.2500 0.7000  
