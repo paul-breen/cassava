@@ -53,7 +53,6 @@ class Cassava(object):
         'ycol': [0],
         'x_as_datetime': False,
         'datetime_format': '%Y-%m-%dT%H:%M:%S',
-        'float_format': '.2g',
         'missing_value': None,
         'delimiter': ',',
         'skip_initial_space': False,

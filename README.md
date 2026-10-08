@@ -56,8 +56,6 @@ Note that the options are global to all modes (commands and subcommands), even w
   -d, --x-as-datetime   treat the x-axis values as datetimes
   -f DATETIME_FORMAT, --datetime-format DATETIME_FORMAT
                         datetime format specification
-  -n FLOAT_FORMAT, --float-format FLOAT_FORMAT
-                        output float format specification when printing stats
   -m MISSING_VALUE, --missing-value MISSING_VALUE
                         value to be treated as missing data
   -l DELIMITER, --delimiter DELIMITER
@@ -67,6 +65,8 @@ Note that the options are global to all modes (commands and subcommands), even w
   -F, --forgive         be forgiving when parsing numeric data
   -N NCOLS, --plot-in-n-columns NCOLS
                         number of columns for a multi-plot grid
+  -n FLOAT_FORMAT, --float-format FLOAT_FORMAT
+                        output float format specification when printing stats
   -k K, --tukey-fence-factor K
                         factor to multiply IQR by in Tukey's rule
   -O, --hide-outliers   don't show outliers on stats plots
