@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.5.1] - 2026-10-08
+
+### Changed
+
+- Update docs - include better example command lines
+
 ## [v0.5.0] - 2026-10-08
 
 ### Added
