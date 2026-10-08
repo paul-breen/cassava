@@ -10,7 +10,7 @@ The package contains classes and workflows for:
 * Providing a quicklook plot of these summary statistics.
 """
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 import sys
 import csv
