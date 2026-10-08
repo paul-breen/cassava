@@ -349,7 +349,7 @@ $ python -m cassava --encoding WINDOWS-1252 -C print qc data.csv
 
 ## Using the package
 
-(Also see the [API documentation](https://paul-breen.github.io/cassava-csv/).)
+(Also see the [API documentation](https://paul-breen.github.io/cassava/).)
 
 To use cassava in your own code, setup a configuration `dict`, and then call the required methods from within the `Cassava` context manager:
 
